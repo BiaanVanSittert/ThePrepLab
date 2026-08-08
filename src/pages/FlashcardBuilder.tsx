@@ -57,7 +57,7 @@ export function FlashcardBuilder() {
   const { knowledgeBase, decks, addDeck, addFlashcardToDeck, removeFlashcardFromDeck, enableShortcuts } = useAppStore();
   const isWeb = import.meta.env.VITE_APP_MODE === 'web';
   
-  const [selectedDeckId, setSelectedDeckId] = useState<string>(decks[0]?.id || '');
+  const [selectedDeckId, setSelectedDeckId] = useState<string>('new');
   const [newDeckTitle, setNewDeckTitle] = useState('');
 
   // Undo/Redo Engine
@@ -73,8 +73,9 @@ export function FlashcardBuilder() {
 
   const handleAddDeck = () => {
     if (newDeckTitle.trim()) {
-      addDeck(newDeckTitle);
+      const id = addDeck(newDeckTitle);
       setNewDeckTitle('');
+      setSelectedDeckId(id);
     }
   };
 
@@ -196,70 +197,72 @@ export function FlashcardBuilder() {
             onChange={(e) => setSelectedDeckId(e.target.value)}
             className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <option value="" disabled>Select a deck...</option>
+            <option value="new">--- Create New FlashDeck ---</option>
             {decks.map(d => (
               <option key={d.id} value={d.id}>{d.title}</option>
             ))}
           </select>
         </div>
         
-        <div className="flex gap-2">
-          <Input 
-            placeholder="New Deck Title" 
-            value={newDeckTitle} 
-            onChange={(e) => setNewDeckTitle(e.target.value)}
-          />
-          <Button onClick={handleAddDeck} variant="outline" className="gap-2">
-            <FolderPlus className="w-4 h-4" /> Create
-          </Button>
-        </div>
+        {selectedDeckId === 'new' ? (
+          <div className="flex gap-2">
+            <Input 
+              placeholder="New Deck Title (e.g., Solar System)" 
+              value={newDeckTitle} 
+              onChange={(e) => setNewDeckTitle(e.target.value)}
+            />
+            <Button onClick={handleAddDeck} variant="outline" className="gap-2">
+              <FolderPlus className="w-4 h-4" /> Create Deck
+            </Button>
+          </div>
+        ) : (
+          selectedDeckId && (
+            <>
+              <h2 className="text-xl font-semibold mt-4">Create Flashcard</h2>
+              <div className="space-y-4 bg-muted/10 border border-border p-4 rounded-xl shadow-sm">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Front</label>
+                  <Input 
+                    value={front}
+                    onChange={(e) => setFront(e.target.value)}
+                    placeholder="Question or Term" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Back</label>
+                  <TextArea 
+                    value={back}
+                    onChange={(e) => setBack(e.target.value)}
+                    placeholder="Answer or Definition" 
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <Button onClick={handleAddCard} disabled={!front || !back} className="w-full gap-2">
+                  <Plus className="w-4 h-4" /> Add Card to Deck
+                </Button>
+              </div>
 
-        {selectedDeckId && (
-          <>
-            <h2 className="text-xl font-semibold mt-4">Create Flashcard</h2>
-            <div className="space-y-4 bg-muted/10 border border-border p-4 rounded-xl shadow-sm">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Front</label>
-                <Input 
-                  value={front}
-                  onChange={(e) => setFront(e.target.value)}
-                  placeholder="Question or Term" 
-                />
+              {/* Existing Cards Preview */}
+              <div className="flex-1 overflow-auto space-y-4 pr-2">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Cards in Deck ({activeDeck?.cards.length || 0})</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {activeDeck?.cards.map(card => (
+                    <div key={card.id} className="relative group">
+                      <Flashcard front={card.front} back={card.back} className="h-48" />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background"
+                        onClick={(e) => { e.stopPropagation(); removeFlashcardFromDeck(selectedDeckId, card.id); }}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Back</label>
-                <TextArea 
-                  value={back}
-                  onChange={(e) => setBack(e.target.value)}
-                  placeholder="Answer or Definition" 
-                  className="min-h-[100px]"
-                />
-              </div>
-              <Button onClick={handleAddCard} disabled={!front || !back} className="w-full gap-2">
-                <Plus className="w-4 h-4" /> Add Card to Deck
-              </Button>
-            </div>
-
-            {/* Existing Cards Preview */}
-            <div className="flex-1 overflow-auto space-y-4 pr-2">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Cards in Deck ({activeDeck?.cards.length || 0})</h3>
-              <div className="grid grid-cols-1 gap-4">
-                {activeDeck?.cards.map(card => (
-                  <div key={card.id} className="relative group">
-                    <Flashcard front={card.front} back={card.back} className="h-48" />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background"
-                      onClick={(e) => { e.stopPropagation(); removeFlashcardFromDeck(selectedDeckId, card.id); }}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
+            </>
+          )
         )}
       </div>
     </div>

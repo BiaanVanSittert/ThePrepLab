@@ -21,7 +21,7 @@ export function DesktopDashboard() {
     fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
       .then(res => res.json())
       .then(data => {
-        const latestVersion = data.tag_name?.replace('v', '');
+        const latestVersion = data.tag_name?.replace(/^v/i, '');
         if (latestVersion && latestVersion !== pkg.version) {
           toast.info(`Version ${data.tag_name} is available!`, {
             description: "Click to download the latest release.",
@@ -41,7 +41,7 @@ export function DesktopDashboard() {
     fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
       .then(res => res.json())
       .then(data => {
-        const latestVersion = data.tag_name?.replace('v', '');
+        const latestVersion = data.tag_name?.replace(/^v/i, '');
         if (latestVersion && latestVersion !== pkg.version) {
           toast.success(`Version ${data.tag_name} is available!`, {
             id: 'update-check',

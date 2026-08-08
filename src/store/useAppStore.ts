@@ -67,7 +67,7 @@ export interface AppState {
   
   // Actions
   setKnowledgeBase: (text: string) => void;
-  addDeck: (title: string) => void;
+  addDeck: (title: string) => string;
   removeDeck: (id: string) => void;
   addFlashcardToDeck: (deckId: string, card: Omit<FlashcardData, 'id'>) => void;
   removeFlashcardFromDeck: (deckId: string, cardId: string) => void;
@@ -169,9 +169,13 @@ export const useAppStore = create<AppState>()(
       
       setKnowledgeBase: (kb) => set({ knowledgeBase: kb }),
       
-      addDeck: (title) => set((state) => ({
-        decks: [...state.decks, { id: crypto.randomUUID(), title, cards: [] }]
-      })),
+      addDeck: (title) => {
+        const newId = crypto.randomUUID();
+        set((state) => ({
+          decks: [...state.decks, { id: newId, title, cards: [] }]
+        }));
+        return newId;
+      },
 
       removeDeck: (id) => set((state) => ({
         decks: state.decks.filter(d => d.id !== id)
