@@ -10,7 +10,7 @@ export function StudyMode() {
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
-  const [score, setScore] = useState({ remembered: 0, forgotten: 0 });
+  const [score, setScore] = useState<{ remembered: number[], forgotten: number[] }>({ remembered: [], forgotten: [] });
 
   const isWeb = import.meta.env.VITE_APP_MODE === 'web';
 
@@ -49,7 +49,7 @@ export function StudyMode() {
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
                 )}
-                <Button onClick={() => { setSelectedDeckId(deck.id); setCurrentIndex(0); setCompleted(false); setScore({ remembered: 0, forgotten: 0}); }} disabled={deck.cards.length === 0}>
+                <Button onClick={() => { setSelectedDeckId(deck.id); setCurrentIndex(0); setCompleted(false); setScore({ remembered: [], forgotten: [] }); }} disabled={deck.cards.length === 0}>
                   Study
                 </Button>
               </div>
@@ -65,8 +65,8 @@ export function StudyMode() {
 
   const handleNext = (remembered: boolean) => {
     setScore(prev => ({
-      remembered: prev.remembered + (remembered ? 1 : 0),
-      forgotten: prev.forgotten + (remembered ? 0 : 1)
+      remembered: remembered ? [...prev.remembered, currentIndex] : prev.remembered,
+      forgotten: !remembered ? [...prev.forgotten, currentIndex] : prev.forgotten
     }));
 
     if (currentIndex + 1 < activeDeck.cards.length) {
@@ -78,35 +78,66 @@ export function StudyMode() {
 
   const handleRestart = () => {
     setCurrentIndex(0);
-    setScore({ remembered: 0, forgotten: 0 });
+    setScore({ remembered: [], forgotten: [] });
     setCompleted(false);
   };
 
   if (completed) {
+    const renderBreakdown = () => (
+      <div className="w-full text-left space-y-4 max-h-96 overflow-y-auto p-4 border border-border rounded-xl bg-muted/10">
+        <h3 className="font-semibold text-lg border-b border-border pb-2">Your Results Breakdown</h3>
+        {score.forgotten.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-red-500 font-medium text-sm uppercase tracking-wider">Needs Practice</h4>
+            {score.forgotten.map(idx => (
+              <div key={idx} className="p-3 bg-red-500/5 border border-red-500/20 rounded-lg">
+                <p className="font-medium">{activeDeck.cards[idx].front}</p>
+                <p className="text-sm text-muted-foreground mt-1">{activeDeck.cards[idx].back}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {score.remembered.length > 0 && (
+          <div className="space-y-2 mt-4">
+            <h4 className="text-green-600 dark:text-green-400 font-medium text-sm uppercase tracking-wider">Remembered</h4>
+            {score.remembered.map(idx => (
+              <div key={idx} className="p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
+                <p className="font-medium">{activeDeck.cards[idx].front}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+
     if (isWeb) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto">
+        <div className="flex flex-col items-center justify-center py-12 space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto">
           <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2">
             <Check className="w-12 h-12 text-green-600 dark:text-green-400" />
           </div>
           <div className="space-y-2">
             <h2 className="text-4xl font-bold">Demo Completed!</h2>
-            <p className="text-lg text-muted-foreground">You scored {score.remembered} / {activeDeck.cards.length} on this demo FlashDeck.</p>
+            <p className="text-lg text-muted-foreground">You scored {score.remembered.length} / {activeDeck.cards.length} on this demo FlashDeck.</p>
           </div>
           
-          <div className="p-8 border border-primary/30 bg-primary/5 rounded-2xl space-y-6 w-full">
-            <h3 className="text-2xl font-bold text-primary">Ready to create your own?</h3>
-            <p className="text-muted-foreground">
-              Download the free desktop application to build unlimited custom FlashDecks and Exams directly from your own study materials!
-            </p>
-            <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer" className="block">
-              <Button size="lg" className="w-full text-lg h-14">
-                Download for Windows
-              </Button>
-            </a>
+          <div className="grid md:grid-cols-2 gap-8 w-full text-left">
+            {renderBreakdown()}
+            
+            <div className="p-8 border-2 border-primary/30 bg-primary/5 rounded-2xl flex flex-col justify-center space-y-6 h-full">
+              <h3 className="text-3xl font-bold text-primary">Ready to create your own?</h3>
+              <p className="text-muted-foreground text-lg">
+                Download the free desktop application to build unlimited custom FlashDecks and Exams directly from your own study materials!
+              </p>
+              <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer" className="block mt-auto pt-4">
+                <Button size="lg" className="w-full text-lg h-14 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
+                  Download for Windows
+                </Button>
+              </a>
+            </div>
           </div>
 
-          <Button onClick={() => setSelectedDeckId(null)} variant="ghost" className="text-muted-foreground">
+          <Button onClick={() => setSelectedDeckId(null)} variant="outline" className="mt-8">
             Try a different demo FlashDeck
           </Button>
         </div>
@@ -114,15 +145,18 @@ export function StudyMode() {
     }
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center animate-in fade-in zoom-in duration-500">
+      <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto">
         <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
           <Check className="w-12 h-12 text-green-600 dark:text-green-400" />
         </div>
         <h2 className="text-3xl font-bold">FlashDeck Completed!</h2>
         <div className="flex gap-8 text-lg">
-          <p className="text-green-600 dark:text-green-400 font-medium">Remembered: {score.remembered}</p>
-          <p className="text-red-500 font-medium">Needs Practice: {score.forgotten}</p>
+          <p className="text-green-600 dark:text-green-400 font-medium">Remembered: {score.remembered.length}</p>
+          <p className="text-red-500 font-medium">Needs Practice: {score.forgotten.length}</p>
         </div>
+        
+        {renderBreakdown()}
+
         <div className="flex gap-4 pt-4">
           <Button onClick={handleRestart} variant="outline" className="gap-2">
             <RefreshCcw className="w-4 h-4" /> Study Again

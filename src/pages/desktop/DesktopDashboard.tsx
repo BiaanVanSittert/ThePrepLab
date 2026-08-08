@@ -1,15 +1,20 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../../components/ui/Button';
 import { Link } from 'react-router-dom';
 import { BookOpen, Layers, PenTool, CheckCircle, GraduationCap, Download, ArrowRight, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import pkg from '../../../package.json';
+import { ExportModal } from '../../components/modals/ExportModal';
+import { ImportModal } from '../../components/modals/ImportModal';
 
 export function DesktopDashboard() {
-  const { decks, exams, knowledgeBase, results, clearResults, importData } = useAppStore();
+  const { decks, exams, knowledgeBase, results, clearResults } = useAppStore();
   const totalCards = decks.reduce((acc, deck) => acc + deck.cards.length, 0);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [importContent, setImportContent] = useState<string | null>(null);
 
   useEffect(() => {
     // Only check once on mount
@@ -53,29 +58,19 @@ export function DesktopDashboard() {
       .catch(() => toast.error("Failed to check for updates", { id: 'update-check' }));
   };
 
-  const handleExport = () => {
-    const data = JSON.stringify({ decks, exams });
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ThePrepLab_Backup_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    toast.success("Data exported successfully!");
-  };
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          importData(event.target.result as string);
-          toast.success("Data imported successfully!");
+          setImportContent(event.target.result as string);
         }
       };
       reader.readAsText(file);
     }
+    // Reset input so they can select the same file again if needed
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const recentScores = results.slice(-3).reverse();
@@ -85,7 +80,10 @@ export function DesktopDashboard() {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500 pb-12">
-      <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
+      <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" />
+      
+      <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
+      {importContent && <ImportModal fileContent={importContent} onClose={() => setImportContent(null)} />}
 
       {/* Header */}
       <div className="flex justify-between items-start">
@@ -100,7 +98,7 @@ export function DesktopDashboard() {
               Check for Updates
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1" onClick={handleExport} title="Export Data">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => setIsExportOpen(true)} title="Export Data">
                 <Download className="w-4 h-4" />
               </Button>
               <Button variant="outline" size="sm" className="flex-1" onClick={() => fileInputRef.current?.click()} title="Import Data">

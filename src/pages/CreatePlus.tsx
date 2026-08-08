@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Layers, CheckCircle } from 'lucide-react';
+import { Layers, CheckCircle, BookOpen } from 'lucide-react';
 
 export function CreatePlus() {
   return (
@@ -30,6 +30,18 @@ export function CreatePlus() {
             <div>
               <h3 className="text-2xl font-bold mb-2">Mock Exam</h3>
               <p className="text-muted-foreground">Craft multiple choice and short answer exams to test your knowledge.</p>
+            </div>
+          </div>
+        </Link>
+        
+        <Link to="/knowledge" className="group md:col-span-2 max-w-2xl mx-auto w-full">
+          <div className="p-8 rounded-2xl border-2 border-transparent bg-primary/5 hover:bg-primary/10 hover:border-primary/20 transition-all h-full flex flex-col items-center text-center space-y-6">
+            <div className="p-4 bg-primary/10 rounded-full text-primary group-hover:scale-110 transition-transform">
+              <BookOpen className="w-12 h-12" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold mb-2">Knowledge Base</h3>
+              <p className="text-muted-foreground">Manage your study materials. Paste your raw notes here to use them in the builders.</p>
             </div>
           </div>
         </Link>

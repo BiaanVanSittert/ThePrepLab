@@ -48,7 +48,6 @@ function DesktopNavLinks() {
     { name: 'Study', path: '/study' },
     { name: 'Take Exam', path: '/exam' },
     { name: 'Create+', path: '/create' },
-    { name: 'Knowledge Base', path: '/knowledge' },
   ];
 
   return (

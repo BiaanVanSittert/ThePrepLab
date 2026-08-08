@@ -2,16 +2,32 @@ import { create } from 'zustand';
 import { persist, StateStorage, createJSONStorage } from 'zustand/middleware';
 import { get, set, del } from 'idb-keyval';
 
-// Custom storage engine for Zustand to use IndexedDB
+// Promise queue to prevent idb-keyval transaction concurrency bugs (race conditions)
+let idbQueue = Promise.resolve();
+
 const idbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    return (await get(name)) || null;
+    return new Promise((resolve) => {
+      idbQueue = idbQueue.then(async () => {
+        resolve((await get(name)) || null);
+      }).catch(() => resolve(null));
+    });
   },
   setItem: async (name: string, value: string): Promise<void> => {
-    await set(name, value);
+    return new Promise((resolve) => {
+      idbQueue = idbQueue.then(async () => {
+        await set(name, value);
+        resolve();
+      }).catch(() => resolve());
+    });
   },
   removeItem: async (name: string): Promise<void> => {
-    await del(name);
+    return new Promise((resolve) => {
+      idbQueue = idbQueue.then(async () => {
+        await del(name);
+        resolve();
+      }).catch(() => resolve());
+    });
   },
 };
 
@@ -43,7 +59,7 @@ export interface ExamResult {
   total: number;
 }
 
-interface AppState {
+export interface AppState {
   knowledgeBase: string;
   decks: FlashcardDeck[];
   exams: { id: string; title: string; questions: ExamQuestion[] }[];
@@ -61,7 +77,7 @@ interface AppState {
   removeExam: (id: string) => void;
   addResult: (result: Omit<ExamResult, 'id'>) => void;
   clearResults: () => void;
-  importData: (data: string) => void;
+  importSelected: (decks: FlashcardDeck[], exams: AppState['exams']) => void;
   enableShortcuts: boolean;
   toggleShortcuts: (enabled: boolean) => void;
 }
@@ -194,18 +210,24 @@ export const useAppStore = create<AppState>()(
 
       clearResults: () => set({ results: [] }),
 
-      importData: (dataStr) => {
-        try {
-          const data = JSON.parse(dataStr);
-          if (data.decks && data.exams) {
-            set((state) => ({
-              decks: [...state.decks, ...data.decks],
-              exams: [...state.exams, ...data.exams]
-            }));
-          }
-        } catch (e) {
-          console.error("Failed to parse imported data", e);
-        }
+      importSelected: (newDecks, newExams) => {
+        // Ensure brand new IDs are generated to prevent collisions
+        const safeDecks = newDecks.map(d => ({
+          ...d,
+          id: crypto.randomUUID(),
+          cards: d.cards.map(c => ({ ...c, id: crypto.randomUUID() }))
+        }));
+        
+        const safeExams = newExams.map(e => ({
+          ...e,
+          id: crypto.randomUUID(),
+          questions: e.questions.map(q => ({ ...q, id: crypto.randomUUID() }))
+        }));
+
+        set((state) => ({
+          decks: [...state.decks, ...safeDecks],
+          exams: [...state.exams, ...safeExams]
+        }));
       },
 
       toggleShortcuts: (enabled) => set({ enableShortcuts: enabled }),

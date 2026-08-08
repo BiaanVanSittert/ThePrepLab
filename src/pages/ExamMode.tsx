@@ -101,9 +101,26 @@ export function ExamMode() {
       if (answers[q.id]?.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim()) score++;
     });
 
+    const renderBreakdown = () => (
+      <div className="w-full text-left space-y-4 max-h-[40vh] overflow-auto pr-4">
+        {activeExam.questions.map((q, idx) => {
+          const isCorrect = answers[q.id]?.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
+          return (
+            <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? 'border-green-200 bg-green-50/50 dark:border-green-900/30 dark:bg-green-900/10' : 'border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-900/10'}`}>
+              <p className="font-medium text-sm mb-2"><span className="opacity-50 mr-2">{idx + 1}.</span> {q.question}</p>
+              <div className="flex gap-4 text-sm mt-2">
+                <p className={`${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-500 line-through opacity-80'}`}>Your answer: {answers[q.id] || '(Skipped)'}</p>
+                {!isCorrect && <p className="text-green-600 dark:text-green-400 font-semibold">Correct: {q.correctAnswer}</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+
     if (isWeb) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto">
+        <div className="flex flex-col items-center justify-center py-12 space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto">
           <div className="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2">
             <CheckCircle2 className="w-12 h-12 text-blue-600 dark:text-blue-400" />
           </div>
@@ -112,19 +129,23 @@ export function ExamMode() {
             <p className="text-lg text-muted-foreground">You scored {score} / {activeExam.questions.length} ({Math.round(score/activeExam.questions.length * 100)}%) on this demo exam.</p>
           </div>
           
-          <div className="p-8 border border-primary/30 bg-primary/5 rounded-2xl space-y-6 w-full">
-            <h3 className="text-2xl font-bold text-primary">Ready to create your own?</h3>
-            <p className="text-muted-foreground">
-              Download the free desktop application to build unlimited custom FlashDecks and Exams directly from your own study materials!
-            </p>
-            <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer" className="block">
-              <Button size="lg" className="w-full text-lg h-14">
-                Download for Windows
-              </Button>
-            </a>
+          <div className="grid md:grid-cols-2 gap-8 w-full text-left">
+            {renderBreakdown()}
+            
+            <div className="p-8 border-2 border-primary/30 bg-primary/5 rounded-2xl flex flex-col justify-center space-y-6 h-full">
+              <h3 className="text-3xl font-bold text-primary">Ready to create your own?</h3>
+              <p className="text-muted-foreground text-lg">
+                Download the free desktop application to build unlimited custom FlashDecks and Exams directly from your own study materials!
+              </p>
+              <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer" className="block mt-auto pt-4">
+                <Button size="lg" className="w-full text-lg h-14 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
+                  Download for Windows
+                </Button>
+              </a>
+            </div>
           </div>
 
-          <Button onClick={() => setSelectedExamId(null)} variant="ghost" className="text-muted-foreground">
+          <Button onClick={() => setSelectedExamId(null)} variant="outline" className="mt-8">
             Try a different demo exam
           </Button>
         </div>
@@ -141,20 +162,7 @@ export function ExamMode() {
           You scored {score} out of {activeExam.questions.length} questions.
         </p>
         
-        <div className="w-full text-left space-y-4 max-h-[40vh] overflow-auto pr-4">
-          {activeExam.questions.map((q, idx) => {
-            const isCorrect = answers[q.id]?.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
-            return (
-              <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? 'border-green-200 bg-green-50/50 dark:border-green-900/30 dark:bg-green-900/10' : 'border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-900/10'}`}>
-                <p className="font-medium text-sm mb-2"><span className="opacity-50 mr-2">{idx + 1}.</span> {q.question}</p>
-                <div className="flex gap-4 text-sm mt-2">
-                  <p className={`${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-500 line-through opacity-80'}`}>Your answer: {answers[q.id] || '(Skipped)'}</p>
-                  {!isCorrect && <p className="text-green-600 dark:text-green-400 font-semibold">Correct: {q.correctAnswer}</p>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {renderBreakdown()}
 
         <div className="flex gap-4">
           <Button onClick={handleRestart} variant="outline">Take Again</Button>
