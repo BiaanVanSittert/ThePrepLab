@@ -51,9 +51,11 @@ export interface ExamQuestion {
   type: 'multiple-choice' | 'true-false' | 'short-answer';
 }
 
-export interface ExamResult {
+export interface AppResult {
   id: string;
-  examId: string;
+  type?: 'exam' | 'flashdeck';
+  referenceId: string; // Will hold examId or deckId
+  examId?: string; // Legacy support
   date: string;
   score: number;
   total: number;
@@ -63,7 +65,7 @@ export interface AppState {
   knowledgeBase: string;
   decks: FlashcardDeck[];
   exams: { id: string; title: string; questions: ExamQuestion[] }[];
-  results: ExamResult[];
+  results: AppResult[];
   
   // Actions
   setKnowledgeBase: (text: string) => void;
@@ -75,7 +77,8 @@ export interface AppState {
   addExam: (exam: Omit<AppState['exams'][0], 'id'>) => void;
   updateExam: (id: string, exam: Omit<AppState['exams'][0], 'id'>) => void;
   removeExam: (id: string) => void;
-  addResult: (result: Omit<ExamResult, 'id'>) => void;
+  addResult: (result: Omit<AppResult, 'id'>) => void;
+  removeResult: (id: string) => void;
   clearResults: () => void;
   importSelected: (decks: FlashcardDeck[], exams: AppState['exams']) => void;
   enableShortcuts: boolean;
@@ -211,6 +214,10 @@ export const useAppStore = create<AppState>()(
 
       addResult: (result) => set((state) => ({
         results: [...state.results, { ...result, id: crypto.randomUUID() }]
+      })),
+
+      removeResult: (id) => set((state) => ({
+        results: state.results.filter(r => r.id !== id)
       })),
 
       clearResults: () => set({ results: [] }),

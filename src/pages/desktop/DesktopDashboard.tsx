@@ -18,7 +18,7 @@ export function DesktopDashboard() {
 
   useEffect(() => {
     // Only check once on mount
-    fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
+    fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         const latestVersion = data.tag_name?.replace(/^v/i, '');
@@ -80,36 +80,11 @@ export function DesktopDashboard() {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500 pb-12">
-      <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".json" className="hidden" />
-      
-      <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
-      {importContent && <ImportModal fileContent={importContent} onClose={() => setImportContent(null)} />}
-
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <h1 className="text-4xl font-bold tracking-tight">Welcome to ThePrepLab</h1>
           <p className="text-lg text-muted-foreground">Your local, distraction-free study environment.</p>
-        </div>
-        <div className="text-right space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Version {pkg.version}</p>
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" size="sm" onClick={handleManualUpdateCheck}>
-              Check for Updates
-            </Button>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1" onClick={() => setIsExportOpen(true)} title="Export Data">
-                <Download className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1" onClick={() => fileInputRef.current?.click()} title="Import Data">
-                <Upload className="w-4 h-4" />
-              </Button>
-            </div>
-            <label className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-1 cursor-pointer">
-              <input type="checkbox" checked={useAppStore(s => s.enableShortcuts)} onChange={(e) => useAppStore.getState().toggleShortcuts(e.target.checked)} className="rounded border-gray-300" />
-              Builder Shortcuts (Ctrl+F/B)
-            </label>
-          </div>
         </div>
       </div>
 
@@ -182,34 +157,58 @@ export function DesktopDashboard() {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      {results.length > 0 && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold">Recent Scores</h2>
+      {/* History */}
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">History</h2>
+          {results.length > 0 && (
             <Button variant="ghost" size="sm" onClick={clearResults} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 gap-2">
-              <Trash2 className="w-4 h-4" /> Clear History
+              <Trash2 className="w-4 h-4" /> Clear All
             </Button>
+          )}
+        </div>
+        
+        {results.length === 0 ? (
+          <div className="p-8 text-center border border-dashed border-border rounded-xl">
+            <p className="text-muted-foreground">No history yet. Take an exam or study a flashdeck to see your results here!</p>
           </div>
+        ) : (
           <div className="space-y-3">
             {recentScores.map(res => {
-              const exam = exams.find(e => e.id === res.examId);
+              const isDeck = res.type === 'flashdeck';
+              const targetList = isDeck ? decks : exams;
+              const titleLookupId = res.referenceId || res.examId;
+              const sourceItem = targetList.find((item: any) => item.id === titleLookupId);
               const percentage = Math.round((res.score / res.total) * 100);
+              
               return (
-                <div key={res.id} className="p-4 rounded-lg border border-border flex justify-between items-center bg-muted/5">
+                <div key={res.id} className="p-4 rounded-lg border border-border flex justify-between items-center bg-muted/5 group">
                   <div>
-                    <p className="font-medium">{exam?.title || 'Deleted Exam'}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(res.date).toLocaleDateString()}</p>
+                    <p className="font-medium flex items-center gap-2">
+                      {isDeck ? <Layers className="w-4 h-4 text-primary" /> : <CheckCircle className="w-4 h-4 text-primary" />}
+                      {sourceItem?.title || 'Deleted Item'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(res.date).toLocaleDateString()}</p>
                   </div>
-                  <div className={`font-semibold text-lg ${percentage >= 80 ? 'text-green-500' : percentage >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>
-                    {percentage}% ({res.score}/{res.total})
+                  <div className="flex items-center gap-6">
+                    <div className={`font-semibold text-lg ${percentage >= 80 ? 'text-green-500' : percentage >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>
+                      {percentage}% <span className="text-sm font-normal text-muted-foreground">({res.score}/{res.total})</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      onClick={() => useAppStore.getState().removeResult(res.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               )
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

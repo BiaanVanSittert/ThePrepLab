@@ -6,7 +6,7 @@ import { Check, X, RefreshCcw, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function StudyMode() {
-  const { decks, removeDeck } = useAppStore();
+  const { decks, removeDeck, addResult } = useAppStore();
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
@@ -64,15 +64,23 @@ export function StudyMode() {
   if (!activeDeck || activeDeck.cards.length === 0) return null; // Fallback
 
   const handleNext = (remembered: boolean) => {
-    setScore(prev => ({
-      remembered: remembered ? [...prev.remembered, currentIndex] : prev.remembered,
-      forgotten: !remembered ? [...prev.forgotten, currentIndex] : prev.forgotten
-    }));
+    const newScore = {
+      remembered: remembered ? [...score.remembered, currentIndex] : score.remembered,
+      forgotten: !remembered ? [...score.forgotten, currentIndex] : score.forgotten
+    };
+    setScore(newScore);
 
     if (currentIndex + 1 < activeDeck.cards.length) {
       setCurrentIndex(currentIndex + 1);
     } else {
       setCompleted(true);
+      addResult({
+        type: 'flashdeck',
+        referenceId: activeDeck.id,
+        date: new Date().toISOString(),
+        score: newScore.remembered.length,
+        total: activeDeck.cards.length
+      });
     }
   };
 
