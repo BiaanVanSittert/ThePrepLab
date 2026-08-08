@@ -80,6 +80,8 @@ export function ExamMode() {
         }
       });
       addResult({
+        type: 'exam',
+        referenceId: activeExam.id,
         examId: activeExam.id,
         date: new Date().toISOString(),
         score,

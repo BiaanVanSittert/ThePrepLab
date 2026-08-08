@@ -1,20 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../../components/ui/Button';
 import { Link } from 'react-router-dom';
-import { BookOpen, Layers, PenTool, CheckCircle, GraduationCap, Download, ArrowRight, Upload, Trash2 } from 'lucide-react';
+import { BookOpen, Layers, PenTool, CheckCircle, GraduationCap, ArrowRight, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import pkg from '../../../package.json';
-import { ExportModal } from '../../components/modals/ExportModal';
-import { ImportModal } from '../../components/modals/ImportModal';
 
 export function DesktopDashboard() {
   const { decks, exams, knowledgeBase, results, clearResults } = useAppStore();
   const totalCards = decks.reduce((acc, deck) => acc + deck.cards.length, 0);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [importContent, setImportContent] = useState<string | null>(null);
 
   useEffect(() => {
     // Only check once on mount
@@ -36,42 +30,7 @@ export function DesktopDashboard() {
       .catch(() => {});
   }, []);
 
-  const handleManualUpdateCheck = () => {
-    toast.loading("Checking for updates...", { id: 'update-check' });
-    fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
-      .then(res => res.json())
-      .then(data => {
-        const latestVersion = data.tag_name?.replace(/^v/i, '');
-        if (latestVersion && latestVersion !== pkg.version) {
-          toast.success(`Version ${data.tag_name} is available!`, {
-            id: 'update-check',
-            description: "A newer version is ready.",
-            action: {
-              label: "Download",
-              onClick: () => window.open("https://github.com/BiaanVanSittert/ThePrepLab/releases/latest", "_blank")
-            }
-          });
-        } else {
-          toast.success("ThePrepLab is up to date!", { id: 'update-check' });
-        }
-      })
-      .catch(() => toast.error("Failed to check for updates", { id: 'update-check' }));
-  };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setImportContent(event.target.result as string);
-        }
-      };
-      reader.readAsText(file);
-    }
-    // Reset input so they can select the same file again if needed
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
 
   const recentScores = results.slice(-3).reverse();
   const averageScore = results.length > 0 
@@ -196,8 +155,8 @@ export function DesktopDashboard() {
                     </div>
                     <Button 
                       variant="ghost" 
-                      size="icon" 
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      size="sm" 
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2"
                       onClick={() => useAppStore.getState().removeResult(res.id)}
                     >
                       <Trash2 className="w-4 h-4" />
