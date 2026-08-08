@@ -20,10 +20,12 @@ export function Dashboard() {
           A minimalist, local-first application to build custom mock exams and flashcards directly from your knowledge base.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-          <Button size="lg" className="gap-2 w-full sm:w-auto">
-            <Download className="w-4 h-4" />
-            Download for Windows
-          </Button>
+          <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer">
+            <Button size="lg" className="gap-2 w-full sm:w-auto">
+              <Download className="w-4 h-4" />
+              Download for Windows
+            </Button>
+          </a>
           <Link to="/knowledge">
             <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto">
               Go to App <ArrowRight className="w-4 h-4" />
