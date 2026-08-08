@@ -4,14 +4,29 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { TextArea } from '../components/ui/TextArea';
 import { Plus, Trash2, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function ExamBuilder() {
-  const { knowledgeBase, addExam } = useAppStore();
+  const { knowledgeBase, addExam, updateExam, exams, enableShortcuts } = useAppStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const editExamId = location.state?.editExamId;
+  const isWeb = import.meta.env.VITE_APP_MODE === 'web';
   
   const [examTitle, setExamTitle] = useState('');
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
+
+  // Initialize for edit
+  useEffect(() => {
+    if (editExamId) {
+      const examToEdit = exams.find(e => e.id === editExamId);
+      if (examToEdit) {
+        setExamTitle(examToEdit.title);
+        setQuestions(examToEdit.questions);
+      }
+    }
+  }, [editExamId, exams]);
 
   // Current Question State
   const [qType, setQType] = useState<'multiple-choice' | 'true-false' | 'short-answer'>('multiple-choice');
@@ -23,6 +38,33 @@ export function ExamBuilder() {
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties | null>(null);
   const [selectedText, setSelectedText] = useState('');
   const textRef = useRef<HTMLDivElement>(null);
+  const hasSeenShortcutHint = useRef(false);
+
+  // Keyboard Shortcuts (Ctrl+F for Question, Ctrl+B for Answer)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (enableShortcuts && !isWeb && e.ctrlKey) {
+        if (e.key.toLowerCase() === 'f') {
+          e.preventDefault();
+          const selection = window.getSelection()?.toString().trim();
+          if (selection) {
+            setQText(selection);
+            toast.success("Piped to Question", { duration: 1500 });
+          }
+        }
+        if (e.key.toLowerCase() === 'b') {
+          e.preventDefault();
+          const selection = window.getSelection()?.toString().trim();
+          if (selection) {
+            setQCorrect(selection);
+            toast.success("Piped to Answer", { duration: 1500 });
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [enableShortcuts, isWeb]);
 
   useEffect(() => {
     const handleSelection = () => {
@@ -42,12 +84,19 @@ export function ExamBuilder() {
           left: rect.left + rect.width / 2 + window.scrollX,
         });
         setSelectedText(text);
+
+        if (!hasSeenShortcutHint.current && enableShortcuts && !isWeb) {
+          hasSeenShortcutHint.current = true;
+          toast("Shortcut Tip", { 
+            description: "You can also use Ctrl+F (Question) and Ctrl+B (Answer) to pipe highlighted text!" 
+          });
+        }
       }
     };
 
     document.addEventListener('mouseup', handleSelection);
     return () => document.removeEventListener('mouseup', handleSelection);
-  }, []);
+  }, [enableShortcuts, isWeb]);
 
   const handleAddQuestion = () => {
     if (!qText.trim()) return;
@@ -83,8 +132,14 @@ export function ExamBuilder() {
 
   const handleSaveExam = () => {
     if (examTitle.trim() && questions.length > 0) {
-      addExam({ title: examTitle, questions });
-      navigate('/');
+      if (editExamId) {
+        updateExam(editExamId, { title: examTitle, questions });
+        toast.success("Exam updated successfully!");
+      } else {
+        addExam({ title: examTitle, questions });
+        toast.success("Exam created successfully!");
+      }
+      navigate('/exam'); // Go to exams list
     }
   };
 
@@ -120,9 +175,9 @@ export function ExamBuilder() {
       {/* Right Pane: Exam Builder */}
       <div className="flex-1 flex flex-col space-y-6 overflow-hidden">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Build Mock Exam</h2>
+          <h2 className="text-xl font-semibold">{editExamId ? 'Edit Exam' : 'Build Mock Exam'}</h2>
           <Button onClick={handleSaveExam} disabled={questions.length === 0 || !examTitle} className="gap-2">
-            <Save className="w-4 h-4" /> Save Exam
+            <Save className="w-4 h-4" /> {editExamId ? 'Update Exam' : 'Save Exam'}
           </Button>
         </div>
 

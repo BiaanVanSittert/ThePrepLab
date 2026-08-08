@@ -12,13 +12,15 @@ export function StudyMode() {
   const [completed, setCompleted] = useState(false);
   const [score, setScore] = useState({ remembered: 0, forgotten: 0 });
 
+  const isWeb = import.meta.env.VITE_APP_MODE === 'web';
+
   if (decks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-        <h2 className="text-2xl font-semibold">No flashcard decks found</h2>
+        <h2 className="text-2xl font-semibold">No FlashDecks found</h2>
         <p className="text-muted-foreground">Create a deck first to start studying!</p>
         <Link to="/flashcards">
-          <Button>Go to Flashcard Builder</Button>
+          <Button>Go to Builder</Button>
         </Link>
       </div>
     );
@@ -28,7 +30,7 @@ export function StudyMode() {
   if (!selectedDeckId) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
-        <h2 className="text-3xl font-bold tracking-tight">Select a Deck</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Select a FlashDeck</h2>
         <div className="grid gap-4">
           {decks.map(deck => (
             <div key={deck.id} className="p-6 border border-border rounded-xl flex items-center justify-between bg-muted/5 hover:bg-muted/10 transition-colors group">
@@ -37,14 +39,16 @@ export function StudyMode() {
                 <p className="text-sm text-muted-foreground">{deck.cards.length} Cards</p>
               </div>
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => { e.stopPropagation(); removeDeck(deck.id); }}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
+                {!isWeb && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => { e.stopPropagation(); removeDeck(deck.id); }}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                )}
                 <Button onClick={() => { setSelectedDeckId(deck.id); setCurrentIndex(0); setCompleted(false); setScore({ remembered: 0, forgotten: 0}); }} disabled={deck.cards.length === 0}>
                   Study
                 </Button>
@@ -79,12 +83,42 @@ export function StudyMode() {
   };
 
   if (completed) {
+    if (isWeb) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto">
+          <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2">
+            <Check className="w-12 h-12 text-green-600 dark:text-green-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-4xl font-bold">Demo Completed!</h2>
+            <p className="text-lg text-muted-foreground">You scored {score.remembered} / {activeDeck.cards.length} on this demo FlashDeck.</p>
+          </div>
+          
+          <div className="p-8 border border-primary/30 bg-primary/5 rounded-2xl space-y-6 w-full">
+            <h3 className="text-2xl font-bold text-primary">Ready to create your own?</h3>
+            <p className="text-muted-foreground">
+              Download the free desktop application to build unlimited custom FlashDecks and Exams directly from your own study materials!
+            </p>
+            <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer" className="block">
+              <Button size="lg" className="w-full text-lg h-14">
+                Download for Windows
+              </Button>
+            </a>
+          </div>
+
+          <Button onClick={() => setSelectedDeckId(null)} variant="ghost" className="text-muted-foreground">
+            Try a different demo FlashDeck
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
           <Check className="w-12 h-12 text-green-600 dark:text-green-400" />
         </div>
-        <h2 className="text-3xl font-bold">Deck Completed!</h2>
+        <h2 className="text-3xl font-bold">FlashDeck Completed!</h2>
         <div className="flex gap-8 text-lg">
           <p className="text-green-600 dark:text-green-400 font-medium">Remembered: {score.remembered}</p>
           <p className="text-red-500 font-medium">Needs Practice: {score.forgotten}</p>

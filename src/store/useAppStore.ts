@@ -57,8 +57,13 @@ interface AppState {
   removeFlashcardFromDeck: (deckId: string, cardId: string) => void;
   
   addExam: (exam: Omit<AppState['exams'][0], 'id'>) => void;
+  updateExam: (id: string, exam: Omit<AppState['exams'][0], 'id'>) => void;
   removeExam: (id: string) => void;
   addResult: (result: Omit<ExamResult, 'id'>) => void;
+  clearResults: () => void;
+  importData: (data: string) => void;
+  enableShortcuts: boolean;
+  toggleShortcuts: (enabled: boolean) => void;
 }
 
 const isWeb = import.meta.env.VITE_APP_MODE === 'web';
@@ -143,8 +148,9 @@ export const useAppStore = create<AppState>()(
       decks: demoDecks,
       exams: demoExams,
       results: [],
-
-      setKnowledgeBase: (text) => set({ knowledgeBase: text }),
+      enableShortcuts: true,
+      
+      setKnowledgeBase: (kb) => set({ knowledgeBase: kb }),
       
       addDeck: (title) => set((state) => ({
         decks: [...state.decks, { id: crypto.randomUUID(), title, cards: [] }]
@@ -174,6 +180,10 @@ export const useAppStore = create<AppState>()(
         exams: [...state.exams, { ...exam, id: crypto.randomUUID() }]
       })),
 
+      updateExam: (id, updatedExam) => set((state) => ({
+        exams: state.exams.map(e => e.id === id ? { ...updatedExam, id } : e)
+      })),
+
       removeExam: (id) => set((state) => ({
         exams: state.exams.filter(e => e.id !== id)
       })),
@@ -181,6 +191,24 @@ export const useAppStore = create<AppState>()(
       addResult: (result) => set((state) => ({
         results: [...state.results, { ...result, id: crypto.randomUUID() }]
       })),
+
+      clearResults: () => set({ results: [] }),
+
+      importData: (dataStr) => {
+        try {
+          const data = JSON.parse(dataStr);
+          if (data.decks && data.exams) {
+            set((state) => ({
+              decks: [...state.decks, ...data.decks],
+              exams: [...state.exams, ...data.exams]
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to parse imported data", e);
+        }
+      },
+
+      toggleShortcuts: (enabled) => set({ enableShortcuts: enabled }),
     }),
     {
       name: 'thepreplab-storage',

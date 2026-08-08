@@ -1,5 +1,6 @@
 import { MainLayout } from './layouts/MainLayout';
 import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
 
 // Web Teaser Imports
 import { Dashboard as WebDashboard } from './pages/Dashboard';
@@ -11,6 +12,7 @@ import { FlashcardBuilder } from './pages/FlashcardBuilder';
 import { ExamBuilder } from './pages/ExamBuilder';
 import { StudyMode } from './pages/StudyMode';
 import { ExamMode } from './pages/ExamMode';
+import { CreatePlus } from './pages/CreatePlus';
 
 const isWeb = import.meta.env.VITE_APP_MODE === 'web';
 
@@ -18,7 +20,7 @@ function WebNavLinks() {
   const location = useLocation();
   const links = [
     { name: 'Teaser Home', path: '/' },
-    { name: 'Demo Flashcards', path: '/study' },
+    { name: 'Demo FlashDecks', path: '/study' },
     { name: 'Demo Exam', path: '/exam' },
   ];
 
@@ -43,9 +45,10 @@ function DesktopNavLinks() {
   const location = useLocation();
   const links = [
     { name: 'Dashboard', path: '/' },
+    { name: 'Study', path: '/study' },
+    { name: 'Take Exam', path: '/exam' },
+    { name: 'Create+', path: '/create' },
     { name: 'Knowledge Base', path: '/knowledge' },
-    { name: 'Flashcards', path: '/flashcards' },
-    { name: 'Exam Builder', path: '/exam-builder' },
   ];
 
   return (
@@ -80,6 +83,7 @@ function DesktopRoutes() {
     <Routes>
       <Route path="/" element={<DesktopDashboard />} />
       <Route path="/knowledge" element={<KnowledgeBase />} />
+      <Route path="/create" element={<CreatePlus />} />
       <Route path="/flashcards" element={<FlashcardBuilder />} />
       <Route path="/exam-builder" element={<ExamBuilder />} />
       <Route path="/study" element={<StudyMode />} />
@@ -94,6 +98,7 @@ function App() {
       <MainLayout navLinks={isWeb ? <WebNavLinks /> : <DesktopNavLinks />}>
         {isWeb ? <WebRoutes /> : <DesktopRoutes />}
       </MainLayout>
+      <Toaster position="bottom-right" richColors />
     </HashRouter>
   );
 }

@@ -1,24 +1,75 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from '../components/ui/Button';
 import { TextArea } from '../components/ui/TextArea';
 import { Input } from '../components/ui/Input';
 import { Flashcard } from '../components/ui/Flashcard';
 import { Plus, Trash2, FolderPlus } from 'lucide-react';
+import { toast } from 'sonner';
+
+// Custom Hook for precise undo/redo
+function useHistoryState<T>(initialState: T) {
+  const [state, setState] = useState<T>(initialState);
+  const historyRef = useRef<T[]>([initialState]);
+  const pointerRef = useRef<number>(0);
+
+  const set = useCallback((newState: T) => {
+    const history = historyRef.current;
+    const pointer = pointerRef.current;
+    
+    // Check for massive deletion hint
+    if (typeof initialState === 'object' && initialState !== null) {
+      const oldState = history[pointer] as any;
+      const newS = newState as any;
+      if (oldState.front && !newS.front && oldState.front.length > 20) {
+        toast("Accidentally deleted?", { description: "Press Ctrl+Z to undo." });
+      }
+      if (oldState.back && !newS.back && oldState.back.length > 20) {
+        toast("Accidentally deleted?", { description: "Press Ctrl+Z to undo." });
+      }
+    }
+
+    const newHistory = history.slice(0, pointer + 1);
+    newHistory.push(newState);
+    historyRef.current = newHistory;
+    pointerRef.current = newHistory.length - 1;
+    setState(newState);
+  }, [initialState]);
+
+  const undo = useCallback(() => {
+    if (pointerRef.current > 0) {
+      pointerRef.current -= 1;
+      setState(historyRef.current[pointerRef.current]);
+    }
+  }, []);
+
+  const redo = useCallback(() => {
+    if (pointerRef.current < historyRef.current.length - 1) {
+      pointerRef.current += 1;
+      setState(historyRef.current[pointerRef.current]);
+    }
+  }, []);
+
+  return [state, set, undo, redo] as const;
+}
 
 export function FlashcardBuilder() {
-  const { knowledgeBase, decks, addDeck, addFlashcardToDeck, removeFlashcardFromDeck } = useAppStore();
+  const { knowledgeBase, decks, addDeck, addFlashcardToDeck, removeFlashcardFromDeck, enableShortcuts } = useAppStore();
+  const isWeb = import.meta.env.VITE_APP_MODE === 'web';
   
   const [selectedDeckId, setSelectedDeckId] = useState<string>(decks[0]?.id || '');
   const [newDeckTitle, setNewDeckTitle] = useState('');
 
-  const [front, setFront] = useState('');
-  const [back, setBack] = useState('');
+  // Undo/Redo Engine
+  const [{ front, back }, setForm, undo, redo] = useHistoryState({ front: '', back: '' });
+  const setFront = (val: string) => setForm({ front: val, back });
+  const setBack = (val: string) => setForm({ front, back: val });
 
   // Smart Highlighter State
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties | null>(null);
   const [selectedText, setSelectedText] = useState('');
   const textRef = useRef<HTMLDivElement>(null);
+  const hasSeenShortcutHint = useRef(false);
 
   const handleAddDeck = () => {
     if (newDeckTitle.trim()) {
@@ -30,10 +81,46 @@ export function FlashcardBuilder() {
   const handleAddCard = () => {
     if (selectedDeckId && front.trim() && back.trim()) {
       addFlashcardToDeck(selectedDeckId, { front, back });
-      setFront('');
-      setBack('');
+      setForm({ front: '', back: '' });
     }
   };
+
+  // Keyboard Shortcuts & Undo/Redo Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Undo / Redo
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      }
+
+      // Highlighter Shortcuts (Ctrl+F, Ctrl+B)
+      if (enableShortcuts && !isWeb && e.ctrlKey) {
+        if (e.key.toLowerCase() === 'f') {
+          e.preventDefault();
+          const selection = window.getSelection()?.toString().trim();
+          if (selection) {
+            setFront(selection);
+            toast.success("Piped to Front", { duration: 1500 });
+          }
+        }
+        if (e.key.toLowerCase() === 'b') {
+          e.preventDefault();
+          const selection = window.getSelection()?.toString().trim();
+          if (selection) {
+            setBack(selection);
+            toast.success("Piped to Back", { duration: 1500 });
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [enableShortcuts, isWeb, undo, redo, front, back, setFront, setBack]);
 
   // Handle Text Selection for Highlighter
   useEffect(() => {
@@ -49,18 +136,24 @@ export function FlashcardBuilder() {
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
         
-        // Position popover above the selection
         setPopoverStyle({
           top: rect.top - 50 + window.scrollY,
           left: rect.left + rect.width / 2 + window.scrollX,
         });
         setSelectedText(text);
+
+        if (!hasSeenShortcutHint.current && enableShortcuts && !isWeb) {
+          hasSeenShortcutHint.current = true;
+          toast("Shortcut Tip", { 
+            description: "You can also use Ctrl+F and Ctrl+B to pipe highlighted text!" 
+          });
+        }
       }
     };
 
     document.addEventListener('mouseup', handleSelection);
     return () => document.removeEventListener('mouseup', handleSelection);
-  }, []);
+  }, [enableShortcuts, isWeb]);
 
   const activeDeck = decks.find(d => d.id === selectedDeckId);
 

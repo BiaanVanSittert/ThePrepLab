@@ -1,29 +1,82 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../../components/ui/Button';
 import { Link } from 'react-router-dom';
-import { BookOpen, Layers, PenTool, CheckCircle, GraduationCap, Download, ArrowRight } from 'lucide-react';
+import { BookOpen, Layers, PenTool, CheckCircle, GraduationCap, Download, ArrowRight, Upload, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import pkg from '../../../package.json';
 
 export function DesktopDashboard() {
-  const { decks, exams, knowledgeBase, results } = useAppStore();
+  const { decks, exams, knowledgeBase, results, clearResults, importData } = useAppStore();
   const totalCards = decks.reduce((acc, deck) => acc + deck.cards.length, 0);
-  const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Simple Update Checker: Ping GitHub API for latest release
+    // Only check once on mount
     fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
       .then(res => res.json())
       .then(data => {
         const latestVersion = data.tag_name?.replace('v', '');
-        const currentVersion = pkg.version;
-        if (latestVersion && latestVersion !== currentVersion) {
-          // A very naive version check. If strings don't match, assume update available.
-          setUpdateAvailable(data.tag_name);
+        if (latestVersion && latestVersion !== pkg.version) {
+          toast.info(`Version ${data.tag_name} is available!`, {
+            description: "Click to download the latest release.",
+            action: {
+              label: "Download",
+              onClick: () => window.open("https://github.com/BiaanVanSittert/ThePrepLab/releases/latest", "_blank")
+            },
+            duration: 10000,
+          });
         }
       })
-      .catch(console.error); // Silently fail if offline
+      .catch(() => {});
   }, []);
+
+  const handleManualUpdateCheck = () => {
+    toast.loading("Checking for updates...", { id: 'update-check' });
+    fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
+      .then(res => res.json())
+      .then(data => {
+        const latestVersion = data.tag_name?.replace('v', '');
+        if (latestVersion && latestVersion !== pkg.version) {
+          toast.success(`Version ${data.tag_name} is available!`, {
+            id: 'update-check',
+            description: "A newer version is ready.",
+            action: {
+              label: "Download",
+              onClick: () => window.open("https://github.com/BiaanVanSittert/ThePrepLab/releases/latest", "_blank")
+            }
+          });
+        } else {
+          toast.success("ThePrepLab is up to date!", { id: 'update-check' });
+        }
+      })
+      .catch(() => toast.error("Failed to check for updates", { id: 'update-check' }));
+  };
+
+  const handleExport = () => {
+    const data = JSON.stringify({ decks, exams });
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ThePrepLab_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    toast.success("Data exported successfully!");
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          importData(event.target.result as string);
+          toast.success("Data imported successfully!");
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
 
   const recentScores = results.slice(-3).reverse();
   const averageScore = results.length > 0 
@@ -32,48 +85,33 @@ export function DesktopDashboard() {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500 pb-12">
-      {/* Update Banner */}
-      {updateAvailable && (
-        <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="font-semibold">Update Available: {updateAvailable === 'latest' ? 'Checking...' : updateAvailable === 'none' ? 'You are up to date!' : updateAvailable}</p>
-            {updateAvailable !== 'latest' && updateAvailable !== 'none' && (
-              <p className="text-sm opacity-90">A new version of ThePrepLab is ready to download.</p>
-            )}
-          </div>
-          {updateAvailable !== 'latest' && updateAvailable !== 'none' && (
-            <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm hover:opacity-90 transition-opacity">
-              <Download className="w-4 h-4" /> Download Update
-            </a>
-          )}
-        </div>
-      )}
+      <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
 
       {/* Header */}
-      <div className="space-y-2 flex justify-between items-start">
-        <div>
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
           <h1 className="text-4xl font-bold tracking-tight">Welcome to ThePrepLab</h1>
           <p className="text-lg text-muted-foreground">Your local, distraction-free study environment.</p>
         </div>
         <div className="text-right space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Version {pkg.version}</p>
-          <Button variant="outline" size="sm" onClick={() => {
-            setUpdateAvailable('latest');
-            fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
-              .then(res => res.json())
-              .then(data => {
-                const latestVersion = data.tag_name?.replace('v', '');
-                if (latestVersion && latestVersion !== pkg.version) {
-                  setUpdateAvailable(data.tag_name);
-                } else {
-                  setUpdateAvailable('none');
-                  setTimeout(() => setUpdateAvailable(null), 3000);
-                }
-              })
-              .catch(() => setUpdateAvailable(null));
-          }}>
-            Check for Updates
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button variant="outline" size="sm" onClick={handleManualUpdateCheck}>
+              Check for Updates
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={handleExport} title="Export Data">
+                <Download className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => fileInputRef.current?.click()} title="Import Data">
+                <Upload className="w-4 h-4" />
+              </Button>
+            </div>
+            <label className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-1 cursor-pointer">
+              <input type="checkbox" checked={useAppStore(s => s.enableShortcuts)} onChange={(e) => useAppStore.getState().toggleShortcuts(e.target.checked)} className="rounded border-gray-300" />
+              Builder Shortcuts (Ctrl+F/B)
+            </label>
+          </div>
         </div>
       </div>
 
@@ -105,32 +143,56 @@ export function DesktopDashboard() {
       <div className="space-y-6">
         <h2 className="text-2xl font-semibold">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link to="/flashcards" className="p-6 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors group">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Layers className="w-5 h-5" />
+          <Link to="/study" className="group">
+            <div className="p-8 rounded-xl border border-border bg-primary/5 hover:bg-primary/10 transition-colors h-full space-y-4">
+              <Layers className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
+              <div>
+                <h3 className="text-xl font-medium">Study FlashDeck</h3>
+                <p className="text-muted-foreground">Review your decks using spaced practice.</p>
               </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <h3 className="font-semibold mb-1">Flashcard Builder</h3>
-            <p className="text-sm text-muted-foreground">You have {totalCards} cards across {decks.length} decks.</p>
           </Link>
           <Link to="/exam" className="group">
             <div className="p-8 rounded-xl border border-border bg-primary/5 hover:bg-primary/10 transition-colors h-full space-y-4">
               <CheckCircle className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
               <div>
-                <h3 className="text-xl font-medium">Take an Exam</h3>
-                <p className="text-muted-foreground">Test your knowledge with one of your {exams.length} custom mock exams.</p>
+                <h3 className="text-xl font-medium">Take Exam</h3>
+                <p className="text-muted-foreground">Test your knowledge with your custom mock exams.</p>
               </div>
             </div>
+          </Link>
+          <Link to="/flashcards" className="p-6 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <PenTool className="w-5 h-5" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <h3 className="font-semibold mb-1">FlashDeck Builder</h3>
+            <p className="text-sm text-muted-foreground">Create new cards and decks.</p>
+          </Link>
+          <Link to="/exam-builder" className="p-6 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <h3 className="font-semibold mb-1">Exam Builder</h3>
+            <p className="text-sm text-muted-foreground">Craft new multiple-choice & short answer exams.</p>
           </Link>
         </div>
       </div>
 
       {/* Recent Activity */}
-      {recentScores.length > 0 && (
+      {results.length > 0 && (
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold">Recent Scores</h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold">Recent Scores</h2>
+            <Button variant="ghost" size="sm" onClick={clearResults} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 gap-2">
+              <Trash2 className="w-4 h-4" /> Clear History
+            </Button>
+          </div>
           <div className="space-y-3">
             {recentScores.map(res => {
               const exam = exams.find(e => e.id === res.examId);
