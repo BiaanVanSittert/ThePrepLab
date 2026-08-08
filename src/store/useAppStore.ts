@@ -21,6 +21,12 @@ export interface FlashcardData {
   back: string;
 }
 
+export interface FlashcardDeck {
+  id: string;
+  title: string;
+  cards: FlashcardData[];
+}
+
 export interface ExamQuestion {
   id: string;
   question: string;
@@ -39,14 +45,17 @@ export interface ExamResult {
 
 interface AppState {
   knowledgeBase: string;
-  flashcards: FlashcardData[];
+  decks: FlashcardDeck[];
   exams: { id: string; title: string; questions: ExamQuestion[] }[];
   results: ExamResult[];
   
   // Actions
   setKnowledgeBase: (text: string) => void;
-  addFlashcard: (card: Omit<FlashcardData, 'id'>) => void;
-  removeFlashcard: (id: string) => void;
+  addDeck: (title: string) => void;
+  removeDeck: (id: string) => void;
+  addFlashcardToDeck: (deckId: string, card: Omit<FlashcardData, 'id'>) => void;
+  removeFlashcardFromDeck: (deckId: string, cardId: string) => void;
+  
   addExam: (exam: Omit<AppState['exams'][0], 'id'>) => void;
   removeExam: (id: string) => void;
   addResult: (result: Omit<ExamResult, 'id'>) => void;
@@ -67,19 +76,34 @@ The Roman Empire was founded in 27 BC when Augustus Caesar proclaimed himself th
 --- TECHNOLOGY: COMPUTER SCIENCE ---
 A CPU (Central Processing Unit) is considered the brain of the computer. Random Access Memory (RAM) provides temporary storage for data that is actively being used. The World Wide Web was invented by Tim Berners-Lee in 1989 while working at CERN.`;
 
-const demoFlashcards: FlashcardData[] = [
-  // Science
-  { id: 'sci-1', front: 'What is the largest planet in our solar system?', back: 'Jupiter' },
-  { id: 'sci-2', front: 'What is the speed of light in a vacuum?', back: '299,792,458 m/s' },
-  { id: 'sci-3', front: 'At what temperature does water boil at sea level?', back: '100 degrees Celsius' },
-  // History
-  { id: 'his-1', front: 'Who was the first Roman Emperor?', back: 'Augustus Caesar' },
-  { id: 'his-2', front: 'In what year was the Roman Empire founded?', back: '27 BC' },
-  { id: 'his-3', front: 'When was the Colosseum built?', back: '80 AD' },
-  // Tech
-  { id: 'tech-1', front: 'What does CPU stand for?', back: 'Central Processing Unit' },
-  { id: 'tech-2', front: 'Who invented the World Wide Web?', back: 'Tim Berners-Lee' },
-  { id: 'tech-3', front: 'In what year was the WWW invented?', back: '1989' },
+const demoDecks: FlashcardDeck[] = [
+  {
+    id: 'deck-sci',
+    title: 'Science: Solar System & Physics',
+    cards: [
+      { id: 'sci-1', front: 'What is the largest planet in our solar system?', back: 'Jupiter' },
+      { id: 'sci-2', front: 'What is the speed of light in a vacuum?', back: '299,792,458 m/s' },
+      { id: 'sci-3', front: 'At what temperature does water boil at sea level?', back: '100 degrees Celsius' },
+    ]
+  },
+  {
+    id: 'deck-his',
+    title: 'History: Ancient Rome',
+    cards: [
+      { id: 'his-1', front: 'Who was the first Roman Emperor?', back: 'Augustus Caesar' },
+      { id: 'his-2', front: 'In what year was the Roman Empire founded?', back: '27 BC' },
+      { id: 'his-3', front: 'When was the Colosseum built?', back: '80 AD' },
+    ]
+  },
+  {
+    id: 'deck-tech',
+    title: 'Tech: Computer Science Basics',
+    cards: [
+      { id: 'tech-1', front: 'What does CPU stand for?', back: 'Central Processing Unit' },
+      { id: 'tech-2', front: 'Who invented the World Wide Web?', back: 'Tim Berners-Lee' },
+      { id: 'tech-3', front: 'In what year was the WWW invented?', back: '1989' },
+    ]
+  }
 ];
 
 const demoExams = [
@@ -115,20 +139,35 @@ const demoExams = [
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      // We seed both Desktop and Web with the demo data so new users aren't met with empty screens.
       knowledgeBase: defaultKnowledgeBase,
-      flashcards: demoFlashcards,
+      decks: demoDecks,
       exams: demoExams,
       results: [],
 
       setKnowledgeBase: (text) => set({ knowledgeBase: text }),
       
-      addFlashcard: (card) => set((state) => ({
-        flashcards: [...state.flashcards, { ...card, id: crypto.randomUUID() }]
+      addDeck: (title) => set((state) => ({
+        decks: [...state.decks, { id: crypto.randomUUID(), title, cards: [] }]
       })),
 
-      removeFlashcard: (id) => set((state) => ({
-        flashcards: state.flashcards.filter(c => c.id !== id)
+      removeDeck: (id) => set((state) => ({
+        decks: state.decks.filter(d => d.id !== id)
+      })),
+
+      addFlashcardToDeck: (deckId, card) => set((state) => ({
+        decks: state.decks.map(d => 
+          d.id === deckId 
+            ? { ...d, cards: [...d.cards, { ...card, id: crypto.randomUUID() }] }
+            : d
+        )
+      })),
+
+      removeFlashcardFromDeck: (deckId, cardId) => set((state) => ({
+        decks: state.decks.map(d => 
+          d.id === deckId 
+            ? { ...d, cards: d.cards.filter(c => c.id !== cardId) }
+            : d
+        )
       })),
 
       addExam: (exam) => set((state) => ({
@@ -145,7 +184,6 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'thepreplab-storage',
-      // Web teaser uses session storage so it doesn't leave data behind. Desktop uses robust IndexedDB.
       storage: createJSONStorage(() => isWeb ? sessionStorage : idbStorage),
     }
   )

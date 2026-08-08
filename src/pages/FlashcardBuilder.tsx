@@ -1,32 +1,93 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from '../components/ui/Button';
 import { TextArea } from '../components/ui/TextArea';
 import { Input } from '../components/ui/Input';
 import { Flashcard } from '../components/ui/Flashcard';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, FolderPlus } from 'lucide-react';
 
 export function FlashcardBuilder() {
-  const { knowledgeBase, flashcards, addFlashcard, removeFlashcard } = useAppStore();
+  const { knowledgeBase, decks, addDeck, addFlashcardToDeck, removeFlashcardFromDeck } = useAppStore();
   
+  const [selectedDeckId, setSelectedDeckId] = useState<string>(decks[0]?.id || '');
+  const [newDeckTitle, setNewDeckTitle] = useState('');
+
   const [front, setFront] = useState('');
   const [back, setBack] = useState('');
 
-  const handleAdd = () => {
-    if (front.trim() && back.trim()) {
-      addFlashcard({ front, back });
+  // Smart Highlighter State
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties | null>(null);
+  const [selectedText, setSelectedText] = useState('');
+  const textRef = useRef<HTMLDivElement>(null);
+
+  const handleAddDeck = () => {
+    if (newDeckTitle.trim()) {
+      addDeck(newDeckTitle);
+      setNewDeckTitle('');
+    }
+  };
+
+  const handleAddCard = () => {
+    if (selectedDeckId && front.trim() && back.trim()) {
+      addFlashcardToDeck(selectedDeckId, { front, back });
       setFront('');
       setBack('');
     }
   };
 
+  // Handle Text Selection for Highlighter
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || !textRef.current?.contains(selection.anchorNode)) {
+        setPopoverStyle(null);
+        return;
+      }
+
+      const text = selection.toString().trim();
+      if (text) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        // Position popover above the selection
+        setPopoverStyle({
+          top: rect.top - 50 + window.scrollY,
+          left: rect.left + rect.width / 2 + window.scrollX,
+        });
+        setSelectedText(text);
+      }
+    };
+
+    document.addEventListener('mouseup', handleSelection);
+    return () => document.removeEventListener('mouseup', handleSelection);
+  }, []);
+
+  const activeDeck = decks.find(d => d.id === selectedDeckId);
+
   return (
     <div className="flex flex-col md:flex-row gap-8 h-[calc(100vh-8rem)]">
+      
+      {/* Smart Highlighter Popover */}
+      {popoverStyle && (
+        <div 
+          style={{ ...popoverStyle, transform: 'translateX(-50%)' }}
+          className="absolute z-50 flex gap-2 bg-background border border-border shadow-xl rounded-lg p-2 animate-in fade-in zoom-in duration-200"
+        >
+          <Button size="sm" onClick={() => { setFront(selectedText); setPopoverStyle(null); }}>
+            Set Front
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => { setBack(selectedText); setPopoverStyle(null); }}>
+            Set Back
+          </Button>
+        </div>
+      )}
+
       {/* Left Pane: Knowledge Base Reference */}
       <div className="flex-1 flex flex-col space-y-4">
         <h2 className="text-xl font-semibold">Reference Material</h2>
-        <div className="flex-1 overflow-auto rounded-md border border-border bg-muted/20 p-4">
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground font-mono">
+        <p className="text-xs text-muted-foreground">Highlight any text below to quickly add it to your flashcard!</p>
+        <div ref={textRef} className="flex-1 overflow-auto rounded-md border border-border bg-muted/20 p-6 shadow-inner">
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground font-mono leading-relaxed selection:bg-primary/30">
             {knowledgeBase || "Your knowledge base is empty. Head over to the Knowledge Base tab to add some content."}
           </p>
         </div>
@@ -34,50 +95,79 @@ export function FlashcardBuilder() {
 
       {/* Right Pane: Builder */}
       <div className="flex-1 flex flex-col space-y-6">
-        <h2 className="text-xl font-semibold">Create Flashcard</h2>
+        <h2 className="text-xl font-semibold">Deck Selection</h2>
         
-        <div className="space-y-4 bg-muted/10 border border-border p-4 rounded-xl">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Front</label>
-            <Input 
-              value={front}
-              onChange={(e) => setFront(e.target.value)}
-              placeholder="Question or Term" 
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Back</label>
-            <TextArea 
-              value={back}
-              onChange={(e) => setBack(e.target.value)}
-              placeholder="Answer or Definition" 
-              className="min-h-[100px]"
-            />
-          </div>
-          <Button onClick={handleAdd} className="w-full gap-2">
-            <Plus className="w-4 h-4" /> Add Card
+        <div className="flex gap-4">
+          <select 
+            value={selectedDeckId} 
+            onChange={(e) => setSelectedDeckId(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <option value="" disabled>Select a deck...</option>
+            {decks.map(d => (
+              <option key={d.id} value={d.id}>{d.title}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="flex gap-2">
+          <Input 
+            placeholder="New Deck Title" 
+            value={newDeckTitle} 
+            onChange={(e) => setNewDeckTitle(e.target.value)}
+          />
+          <Button onClick={handleAddDeck} variant="outline" className="gap-2">
+            <FolderPlus className="w-4 h-4" /> Create
           </Button>
         </div>
 
-        {/* Existing Cards Preview */}
-        <div className="flex-1 overflow-auto space-y-4 pr-2">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Your Deck ({flashcards.length})</h3>
-          <div className="grid grid-cols-1 gap-4">
-            {flashcards.map(card => (
-              <div key={card.id} className="relative group">
-                <Flashcard front={card.front} back={card.back} className="h-48" />
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background"
-                  onClick={(e) => { e.stopPropagation(); removeFlashcard(card.id); }}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
+        {selectedDeckId && (
+          <>
+            <h2 className="text-xl font-semibold mt-4">Create Flashcard</h2>
+            <div className="space-y-4 bg-muted/10 border border-border p-4 rounded-xl shadow-sm">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Front</label>
+                <Input 
+                  value={front}
+                  onChange={(e) => setFront(e.target.value)}
+                  placeholder="Question or Term" 
+                />
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Back</label>
+                <TextArea 
+                  value={back}
+                  onChange={(e) => setBack(e.target.value)}
+                  placeholder="Answer or Definition" 
+                  className="min-h-[100px]"
+                />
+              </div>
+              <Button onClick={handleAddCard} disabled={!front || !back} className="w-full gap-2">
+                <Plus className="w-4 h-4" /> Add Card to Deck
+              </Button>
+            </div>
+
+            {/* Existing Cards Preview */}
+            <div className="flex-1 overflow-auto space-y-4 pr-2">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Cards in Deck ({activeDeck?.cards.length || 0})</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {activeDeck?.cards.map(card => (
+                  <div key={card.id} className="relative group">
+                    <Flashcard front={card.front} back={card.back} className="h-48" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background"
+                      onClick={(e) => { e.stopPropagation(); removeFlashcardFromDeck(selectedDeckId, card.id); }}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAppStore, ExamQuestion } from '../store/useAppStore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -19,6 +19,36 @@ export function ExamBuilder() {
   const [qOptions, setQOptions] = useState(['', '', '', '']);
   const [qCorrect, setQCorrect] = useState('');
 
+  // Smart Highlighter State
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties | null>(null);
+  const [selectedText, setSelectedText] = useState('');
+  const textRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || !textRef.current?.contains(selection.anchorNode)) {
+        setPopoverStyle(null);
+        return;
+      }
+
+      const text = selection.toString().trim();
+      if (text) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        setPopoverStyle({
+          top: rect.top - 50 + window.scrollY,
+          left: rect.left + rect.width / 2 + window.scrollX,
+        });
+        setSelectedText(text);
+      }
+    };
+
+    document.addEventListener('mouseup', handleSelection);
+    return () => document.removeEventListener('mouseup', handleSelection);
+  }, []);
+
   const handleAddQuestion = () => {
     if (!qText.trim()) return;
 
@@ -26,7 +56,7 @@ export function ExamBuilder() {
     let finalCorrect = qCorrect;
 
     if (qType === 'multiple-choice') {
-      if (!qCorrect || !qOptions.includes(qCorrect)) return; // Must select correct option
+      if (!qCorrect || !qOptions.includes(qCorrect)) return;
     } else if (qType === 'true-false') {
       finalOptions = ['True', 'False'];
       if (qCorrect !== 'True' && qCorrect !== 'False') return;
@@ -54,17 +84,34 @@ export function ExamBuilder() {
   const handleSaveExam = () => {
     if (examTitle.trim() && questions.length > 0) {
       addExam({ title: examTitle, questions });
-      navigate('/'); // Go back to dashboard
+      navigate('/');
     }
   };
 
   return (
     <div className="flex flex-col md:flex-row gap-8 h-[calc(100vh-8rem)]">
+      
+      {/* Smart Highlighter Popover */}
+      {popoverStyle && (
+        <div 
+          style={{ ...popoverStyle, transform: 'translateX(-50%)' }}
+          className="absolute z-50 flex gap-2 bg-background border border-border shadow-xl rounded-lg p-2 animate-in fade-in zoom-in duration-200"
+        >
+          <Button size="sm" onClick={() => { setQText(selectedText); setPopoverStyle(null); }}>
+            Set as Question
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => { setQCorrect(selectedText); setPopoverStyle(null); }}>
+            Set as Answer
+          </Button>
+        </div>
+      )}
+
       {/* Left Pane: Knowledge Base Reference */}
       <div className="flex-1 flex flex-col space-y-4">
         <h2 className="text-xl font-semibold">Reference Material</h2>
-        <div className="flex-1 overflow-auto rounded-md border border-border bg-muted/20 p-4">
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground font-mono">
+        <p className="text-xs text-muted-foreground">Highlight text to quickly pipe it into the builder!</p>
+        <div ref={textRef} className="flex-1 overflow-auto rounded-md border border-border bg-muted/20 p-6 shadow-inner">
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground font-mono leading-relaxed selection:bg-primary/30">
             {knowledgeBase || "Your knowledge base is empty."}
           </p>
         </div>
@@ -125,7 +172,7 @@ export function ExamBuilder() {
                       const newOpts = [...qOptions];
                       newOpts[idx] = e.target.value;
                       setQOptions(newOpts);
-                      if (qCorrect === opt) setQCorrect(e.target.value); // Keep correct answer synced
+                      if (qCorrect === opt) setQCorrect(e.target.value); 
                     }}
                     placeholder={`Option ${idx + 1}`} 
                   />

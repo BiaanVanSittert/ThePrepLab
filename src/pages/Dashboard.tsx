@@ -1,6 +1,6 @@
 
 import { Button } from '../components/ui/Button';
-import { Download, ArrowRight, Layers, CheckCircle } from 'lucide-react';
+import { Download, Layers, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
@@ -23,11 +23,6 @@ export function Dashboard() {
               Download for Windows
             </Button>
           </a>
-          <Link to="/knowledge">
-            <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto">
-              Go to App <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
         </div>
         <p className="text-xs text-muted-foreground mt-4">
           Data is stored locally in your browser for this demo. Download the desktop app for the full local-first experience.
@@ -43,13 +38,13 @@ export function Dashboard() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
             <Link to="/study">
-              <Button size="lg" className="gap-2 px-8">
+              <Button size="lg" className="gap-2 px-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/20 border-0">
                 <Layers className="w-4 h-4" />
                 Try Demo Flashcards
               </Button>
             </Link>
             <Link to="/exam">
-              <Button size="lg" variant="outline" className="gap-2 px-8">
+              <Button size="lg" className="gap-2 px-8 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-teal-500/20 border-0">
                 <CheckCircle className="w-4 h-4" />
                 Take Demo Exam
               </Button>

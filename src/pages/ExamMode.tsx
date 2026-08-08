@@ -4,8 +4,10 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Link } from 'react-router-dom';
 
+import { Trash2 } from 'lucide-react';
+
 export function ExamMode() {
-  const { exams, addResult } = useAppStore();
+  const { exams, addResult, removeExam } = useAppStore();
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   
   // Active exam state
@@ -35,12 +37,22 @@ export function ExamMode() {
         <h2 className="text-3xl font-bold tracking-tight">Select an Exam</h2>
         <div className="grid gap-4">
           {exams.map(exam => (
-            <div key={exam.id} className="p-6 border border-border rounded-xl flex items-center justify-between bg-muted/5 hover:bg-muted/10 transition-colors">
+            <div key={exam.id} className="p-6 border border-border rounded-xl flex items-center justify-between bg-muted/5 hover:bg-muted/10 transition-colors group">
               <div>
                 <h3 className="font-semibold text-lg">{exam.title}</h3>
                 <p className="text-sm text-muted-foreground">{exam.questions.length} Questions</p>
               </div>
-              <Button onClick={() => setSelectedExamId(exam.id)}>Start Exam</Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => { e.stopPropagation(); removeExam(exam.id); }}
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </Button>
+                <Button onClick={() => setSelectedExamId(exam.id)}>Start Exam</Button>
+              </div>
             </div>
           ))}
         </div>
