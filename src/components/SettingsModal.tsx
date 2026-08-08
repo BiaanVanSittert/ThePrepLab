@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
 import { Settings, AlertTriangle } from 'lucide-react';
@@ -13,20 +14,14 @@ export function SettingsModal() {
 
   const handleFactoryReset = async () => {
     try {
-      const { clearResults } = useAppStore.getState();
+      const { factoryReset } = useAppStore.getState();
       
       // Wipe Zustand Persist Store from IndexedDB/SessionStorage
-      const isWeb = import.meta.env.VITE_APP_MODE === 'web';
-      if (isWeb) {
-        sessionStorage.removeItem('thepreplab-storage');
-      } else {
-        const { del } = await import('idb-keyval');
-        await del('thepreplab-storage');
-      }
+      const { del } = await import('idb-keyval');
+      await del('thepreplab-storage');
       
-      // Clear runtime memory
-      useAppStore.setState({ decks: [], exams: [], results: [], knowledgeBase: '' });
-      clearResults();
+      // Clear runtime memory & restore defaults
+      factoryReset();
       
       toast.success("Factory Reset Complete", { description: "App will now reload." });
       
@@ -47,7 +42,7 @@ export function SettingsModal() {
         <Settings className="w-5 h-5 text-muted-foreground" />
       </Button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
           <div className="bg-card w-full max-w-md p-6 rounded-2xl border border-border shadow-2xl relative">
             <h2 className="text-2xl font-bold mb-6">Settings</h2>
@@ -61,7 +56,7 @@ export function SettingsModal() {
                   <h3 className="font-semibold">Danger Zone</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  If you are planning to uninstall the application, or just want to start fresh, you can permanently delete all your local FlashDecks, Exams, and scores here.
+                  If you are planning to uninstall the application, or just want to start fresh, you can permanently delete all your local FlashDecks, Exams, and scores here. This will restore the default demo data.
                 </p>
                 
                 {!confirmDelete ? (
@@ -86,7 +81,8 @@ export function SettingsModal() {
               ✕
             </Button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

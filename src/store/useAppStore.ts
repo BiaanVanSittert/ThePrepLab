@@ -80,6 +80,7 @@ export interface AppState {
   importSelected: (decks: FlashcardDeck[], exams: AppState['exams']) => void;
   enableShortcuts: boolean;
   toggleShortcuts: (enabled: boolean) => void;
+  factoryReset: () => void;
 }
 
 const isWeb = import.meta.env.VITE_APP_MODE === 'web';
@@ -231,6 +232,13 @@ export const useAppStore = create<AppState>()(
       },
 
       toggleShortcuts: (enabled) => set({ enableShortcuts: enabled }),
+
+      factoryReset: () => set({
+        knowledgeBase: defaultKnowledgeBase,
+        decks: demoDecks,
+        exams: demoExams,
+        results: []
+      }),
     }),
     {
       name: 'thepreplab-storage',
