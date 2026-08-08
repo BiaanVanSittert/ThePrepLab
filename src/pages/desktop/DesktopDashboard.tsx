@@ -1,9 +1,27 @@
+import { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Link } from 'react-router-dom';
-import { BookOpen, Layers, PenTool, CheckCircle, GraduationCap } from 'lucide-react';
+import { BookOpen, Layers, PenTool, CheckCircle, GraduationCap, Download } from 'lucide-react';
+import pkg from '../../../package.json';
 
 export function DesktopDashboard() {
   const { flashcards, exams, knowledgeBase, results } = useAppStore();
+  const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Simple Update Checker: Ping GitHub API for latest release
+    fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest')
+      .then(res => res.json())
+      .then(data => {
+        const latestVersion = data.tag_name?.replace('v', '');
+        const currentVersion = pkg.version;
+        if (latestVersion && latestVersion !== currentVersion) {
+          // A very naive version check. If strings don't match, assume update available.
+          setUpdateAvailable(data.tag_name);
+        }
+      })
+      .catch(console.error); // Silently fail if offline
+  }, []);
 
   const recentScores = results.slice(-3).reverse();
   const averageScore = results.length > 0 
@@ -12,6 +30,19 @@ export function DesktopDashboard() {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500">
+      {/* Update Banner */}
+      {updateAvailable && (
+        <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold">Update Available: {updateAvailable}</p>
+            <p className="text-sm opacity-90">A new version of ThePrepLab is ready to download.</p>
+          </div>
+          <a href="https://github.com/BiaanVanSittert/ThePrepLab/releases/latest" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm hover:opacity-90 transition-opacity">
+            <Download className="w-4 h-4" /> Download Update
+          </a>
+        </div>
+      )}
+
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-4xl font-bold tracking-tight">Welcome to ThePrepLab</h1>

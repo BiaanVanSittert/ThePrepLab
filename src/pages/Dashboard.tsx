@@ -1,9 +1,6 @@
 
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { TextArea } from '../components/ui/TextArea';
-import { Flashcard } from '../components/ui/Flashcard';
-import { Download, ArrowRight } from 'lucide-react';
+import { Download, ArrowRight, Layers, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
@@ -39,31 +36,24 @@ export function Dashboard() {
 
       {/* Demo Section */}
       <section className="w-full max-w-4xl space-y-12 pt-12 border-t border-border">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold">Interactive Demo</h2>
-          <p className="text-sm text-muted-foreground">Try flipping a flashcard or interacting with the minimal UI components.</p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-12 items-start justify-center">
-          {/* Components Demo */}
-          <div className="flex-1 space-y-6 w-full max-w-sm mx-auto">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Knowledge Base Input</label>
-              <TextArea placeholder="Paste your study notes here..." />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Topic Search</label>
-              <Input placeholder="Search concepts..." />
-            </div>
-          </div>
-
-          {/* Flashcard Demo */}
-          <div className="flex-1 w-full flex items-center justify-center max-w-sm mx-auto">
-            <Flashcard 
-              front="What is the powerhouse of the cell?" 
-              back="The mitochondria." 
-              className="h-56"
-            />
+        <div className="text-center space-y-6">
+          <h2 className="text-2xl font-semibold">Interactive Web Demo</h2>
+          <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+            Try out the core features right here in your browser! We've pre-loaded a few subjects (Science, History, Tech) so you can test the study environment immediately.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
+            <Link to="/study">
+              <Button size="lg" className="gap-2 px-8">
+                <Layers className="w-4 h-4" />
+                Try Demo Flashcards
+              </Button>
+            </Link>
+            <Link to="/exam">
+              <Button size="lg" variant="outline" className="gap-2 px-8">
+                <CheckCircle className="w-4 h-4" />
+                Take Demo Exam
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
