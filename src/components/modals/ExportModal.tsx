@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 
 export function ExportModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { decks, exams } = useAppStore();
-  const [selectedDecks, setSelectedDecks] = useState<Set<string>>(new Set(decks.map(d => d.id)));
-  const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set(exams.map(e => e.id)));
+  const [selectedDecks, setSelectedDecks] = useState<Set<string>>(new Set());
+  const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
 
   if (!isOpen) return null;
 

@@ -14,19 +14,23 @@ export function ExamBuilder() {
   const editExamId = location.state?.editExamId;
   const isWeb = import.meta.env.VITE_APP_MODE === 'web';
   
+  const [selectedExamId, setSelectedExamId] = useState<string>(editExamId || 'new');
   const [examTitle, setExamTitle] = useState('');
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
 
   // Initialize for edit
   useEffect(() => {
-    if (editExamId) {
-      const examToEdit = exams.find(e => e.id === editExamId);
+    if (selectedExamId && selectedExamId !== 'new') {
+      const examToEdit = exams.find(e => e.id === selectedExamId);
       if (examToEdit) {
         setExamTitle(examToEdit.title);
         setQuestions(examToEdit.questions);
       }
+    } else {
+      setExamTitle('');
+      setQuestions([]);
     }
-  }, [editExamId, exams]);
+  }, [selectedExamId, exams]);
 
   // Current Question State
   const [qType, setQType] = useState<'multiple-choice' | 'true-false' | 'short-answer'>('multiple-choice');
@@ -132,8 +136,8 @@ export function ExamBuilder() {
 
   const handleSaveExam = () => {
     if (examTitle.trim() && questions.length > 0) {
-      if (editExamId) {
-        updateExam(editExamId, { title: examTitle, questions });
+      if (selectedExamId !== 'new') {
+        updateExam(selectedExamId, { title: examTitle, questions });
         toast.success("Exam updated successfully!");
       } else {
         addExam({ title: examTitle, questions });
@@ -175,10 +179,23 @@ export function ExamBuilder() {
       {/* Right Pane: Exam Builder */}
       <div className="flex-1 flex flex-col space-y-6 overflow-hidden">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">{editExamId ? 'Edit Exam' : 'Build Mock Exam'}</h2>
+          <h2 className="text-xl font-semibold">{selectedExamId !== 'new' ? 'Edit Exam' : 'Build Mock Exam'}</h2>
           <Button onClick={handleSaveExam} disabled={questions.length === 0 || !examTitle} className="gap-2">
-            <Save className="w-4 h-4" /> {editExamId ? 'Update Exam' : 'Save Exam'}
+            <Save className="w-4 h-4" /> {selectedExamId !== 'new' ? 'Update Exam' : 'Save Exam'}
           </Button>
+        </div>
+
+        <div className="flex gap-4">
+          <select 
+            value={selectedExamId} 
+            onChange={(e) => setSelectedExamId(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <option value="new">--- Create New Exam ---</option>
+            {exams.map(e => (
+              <option key={e.id} value={e.id}>{e.title}</option>
+            ))}
+          </select>
         </div>
 
         <Input 
