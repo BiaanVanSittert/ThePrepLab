@@ -68,7 +68,7 @@ export function ImportModal({ fileContent, onClose }: ImportModalProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-card w-full max-w-lg p-6 rounded-2xl border border-border shadow-2xl relative flex flex-col max-h-[80vh]">
+      <div className="bg-background w-full max-w-lg p-6 rounded-2xl border border-border shadow-2xl relative flex flex-col max-h-[80vh]">
         <h2 className="text-2xl font-bold mb-2">Import Data</h2>
         <p className="text-muted-foreground text-sm mb-6">Select which items from the file you want to import.</p>
         

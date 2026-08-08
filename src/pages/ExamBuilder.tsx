@@ -191,9 +191,9 @@ export function ExamBuilder() {
             onChange={(e) => setSelectedExamId(e.target.value)}
             className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <option value="new">--- Create New Exam ---</option>
+            <option value="new" className="dark:bg-[#0a0a0a]">--- Create New Exam ---</option>
             {exams.map(e => (
-              <option key={e.id} value={e.id}>{e.title}</option>
+              <option key={e.id} value={e.id} className="dark:bg-[#0a0a0a]">{e.title}</option>
             ))}
           </select>
         </div>
@@ -213,9 +213,9 @@ export function ExamBuilder() {
               onChange={(e) => setQType(e.target.value as any)}
               className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <option value="multiple-choice">Multiple Choice</option>
-              <option value="true-false">True / False</option>
-              <option value="short-answer">Short Answer</option>
+              <option value="multiple-choice" className="dark:bg-[#0a0a0a]">Multiple Choice</option>
+              <option value="true-false" className="dark:bg-[#0a0a0a]">True / False</option>
+              <option value="short-answer" className="dark:bg-[#0a0a0a]">Short Answer</option>
             </select>
           </div>
 
@@ -308,7 +308,15 @@ export function ExamBuilder() {
                     variant="ghost" 
                     size="sm" 
                     className="p-1 h-auto text-red-500"
-                    onClick={() => setQuestions(questions.filter(x => x.id !== q.id))}
+                    onClick={() => {
+                      setQuestions(questions.filter(x => x.id !== q.id));
+                      toast("Question deleted", {
+                        action: {
+                          label: "Undo",
+                          onClick: () => setQuestions(prev => [...prev, q])
+                        }
+                      });
+                    }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

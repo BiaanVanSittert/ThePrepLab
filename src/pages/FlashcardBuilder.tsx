@@ -197,9 +197,9 @@ export function FlashcardBuilder() {
             onChange={(e) => setSelectedDeckId(e.target.value)}
             className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <option value="new">--- Create New FlashDeck ---</option>
+            <option value="new" className="dark:bg-[#0a0a0a]">--- Create New FlashDeck ---</option>
             {decks.map(d => (
-              <option key={d.id} value={d.id}>{d.title}</option>
+              <option key={d.id} value={d.id} className="dark:bg-[#0a0a0a]">{d.title}</option>
             ))}
           </select>
         </div>

@@ -91,7 +91,7 @@ export function SettingsModal() {
 
       {isOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card w-full max-w-md p-6 rounded-2xl border border-border shadow-2xl relative">
+          <div className="bg-background w-full max-w-md p-6 rounded-2xl border border-border shadow-2xl relative">
             <h2 className="text-2xl font-bold mb-1">Settings</h2>
             <p className="text-sm text-muted-foreground mb-6">Version {pkg.version}</p>
 

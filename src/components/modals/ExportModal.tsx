@@ -50,7 +50,7 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean, onClose: () 
 
   return createPortal(
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-card w-full max-w-lg p-6 rounded-2xl border border-border shadow-2xl relative flex flex-col max-h-[80vh]">
+      <div className="bg-background w-full max-w-lg p-6 rounded-2xl border border-border shadow-2xl relative flex flex-col max-h-[80vh]">
         <h2 className="text-2xl font-bold mb-2">Export Data</h2>
         <p className="text-muted-foreground text-sm mb-6">Select which FlashDecks and Exams you want to export.</p>
         
