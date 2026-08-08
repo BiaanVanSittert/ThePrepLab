@@ -5,9 +5,12 @@ import { Settings, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function SettingsModal() {
+  const isWeb = import.meta.env.VITE_APP_MODE === 'web';
   const [isOpen, setIsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   
+  if (isWeb) return null;
+
   const handleFactoryReset = async () => {
     try {
       const { clearResults } = useAppStore.getState();
