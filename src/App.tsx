@@ -1,6 +1,6 @@
 import React from 'react';
 import { MainLayout } from './layouts/MainLayout';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard';
 import { KnowledgeBase } from './pages/KnowledgeBase';
 import { FlashcardBuilder } from './pages/FlashcardBuilder';
@@ -32,7 +32,7 @@ function NavLinks() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <MainLayout navLinks={<NavLinks />}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -40,7 +40,7 @@ function App() {
           <Route path="/flashcards" element={<FlashcardBuilder />} />
         </Routes>
       </MainLayout>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
