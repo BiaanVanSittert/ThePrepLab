@@ -256,8 +256,7 @@ export function FlashcardBuilder() {
                           className="p-1 h-auto"
                           onClick={(e) => { 
                             e.stopPropagation();
-                            setFront(card.front);
-                            setBack(card.back);
+                            setForm({ front: card.front, back: card.back });
                             removeFlashcardFromDeck(selectedDeckId, card.id); 
                           }}
                         >
@@ -267,7 +266,16 @@ export function FlashcardBuilder() {
                           variant="ghost" 
                           size="sm" 
                           className="p-1 h-auto text-red-500"
-                          onClick={(e) => { e.stopPropagation(); removeFlashcardFromDeck(selectedDeckId, card.id); }}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            removeFlashcardFromDeck(selectedDeckId, card.id);
+                            toast("Flashcard deleted", {
+                              action: {
+                                label: "Undo",
+                                onClick: () => addFlashcardToDeck(selectedDeckId, { front: card.front, back: card.back })
+                              }
+                            });
+                          }}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

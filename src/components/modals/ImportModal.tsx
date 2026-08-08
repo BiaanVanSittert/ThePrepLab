@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppStore, FlashcardDeck, AppState } from '../../store/useAppStore';
 import { Button } from '../ui/Button';
 import { Upload, CheckSquare, Square, AlertTriangle } from 'lucide-react';
@@ -65,8 +66,8 @@ export function ImportModal({ fileContent, onClose }: ImportModalProps) {
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
       <div className="bg-card w-full max-w-lg p-6 rounded-2xl border border-border shadow-2xl relative flex flex-col max-h-[80vh]">
         <h2 className="text-2xl font-bold mb-2">Import Data</h2>
         <p className="text-muted-foreground text-sm mb-6">Select which items from the file you want to import.</p>
@@ -113,6 +114,7 @@ export function ImportModal({ fileContent, onClose }: ImportModalProps) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
