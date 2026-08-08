@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { MainLayout } from './layouts/MainLayout';
 import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard';
