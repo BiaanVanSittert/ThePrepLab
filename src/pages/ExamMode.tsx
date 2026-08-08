@@ -145,7 +145,7 @@ export function ExamMode() {
             </div>
           </div>
 
-          <Button onClick={() => setSelectedExamId(null)} variant="outline" className="mt-8">
+          <Button onClick={() => { handleRestart(); setSelectedExamId(null); }} variant="outline" className="mt-8">
             Try a different demo exam
           </Button>
         </div>
@@ -153,7 +153,7 @@ export function ExamMode() {
     }
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto">
+      <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto">
         <h2 className="text-3xl font-bold tracking-tight">Exam Results</h2>
         <div className="w-32 h-32 rounded-full border-8 border-primary flex items-center justify-center text-4xl font-bold shadow-lg">
           {Math.round(score / activeExam.questions.length * 100)}%
@@ -166,7 +166,7 @@ export function ExamMode() {
 
         <div className="flex gap-4">
           <Button onClick={handleRestart} variant="outline">Take Again</Button>
-          <Button onClick={() => setSelectedExamId(null)}>Back to Exams</Button>
+          <Button onClick={() => { handleRestart(); setSelectedExamId(null); }}>Back to Exams</Button>
         </div>
       </div>
     );

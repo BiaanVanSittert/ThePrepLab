@@ -137,7 +137,7 @@ export function StudyMode() {
             </div>
           </div>
 
-          <Button onClick={() => setSelectedDeckId(null)} variant="outline" className="mt-8">
+          <Button onClick={() => { handleRestart(); setSelectedDeckId(null); }} variant="outline" className="mt-8">
             Try a different demo FlashDeck
           </Button>
         </div>
@@ -161,7 +161,7 @@ export function StudyMode() {
           <Button onClick={handleRestart} variant="outline" className="gap-2">
             <RefreshCcw className="w-4 h-4" /> Study Again
           </Button>
-          <Button onClick={() => setSelectedDeckId(null)}>Choose Another Deck</Button>
+          <Button onClick={() => { handleRestart(); setSelectedDeckId(null); }}>Choose Another Deck</Button>
         </div>
       </div>
     );
