@@ -45,11 +45,7 @@ export function ExamMode() {
               <div className="flex items-center gap-2">
                 {!isWeb && (
                   <>
-                    <Link to="/exam-builder" state={{ editExamId: exam.id }}>
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        Edit
-                      </Button>
-                    </Link>
+
                     <Button 
                       variant="ghost" 
                       size="sm" 

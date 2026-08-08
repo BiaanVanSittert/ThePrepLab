@@ -249,14 +249,29 @@ export function FlashcardBuilder() {
                   {activeDeck?.cards.map(card => (
                     <div key={card.id} className="relative group">
                       <Flashcard front={card.front} back={card.back} className="h-48" />
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background"
-                        onClick={(e) => { e.stopPropagation(); removeFlashcardFromDeck(selectedDeckId, card.id); }}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-background rounded-md">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="p-1 h-auto"
+                          onClick={(e) => { 
+                            e.stopPropagation();
+                            setFront(card.front);
+                            setBack(card.back);
+                            removeFlashcardFromDeck(selectedDeckId, card.id); 
+                          }}
+                        >
+                          <span className="text-xs">Edit</span>
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="p-1 h-auto text-red-500"
+                          onClick={(e) => { e.stopPropagation(); removeFlashcardFromDeck(selectedDeckId, card.id); }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -289,14 +289,30 @@ export function ExamBuilder() {
                 <p className="font-medium text-sm mb-2"><span className="text-primary mr-2">{idx + 1}.</span>{q.question}</p>
                 <p className="text-xs text-green-600 dark:text-green-400 font-semibold">Ans: {q.correctAnswer}</p>
                 
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
-                  onClick={() => setQuestions(questions.filter(x => x.id !== q.id))}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-background rounded-md">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-1 h-auto"
+                    onClick={() => {
+                      setQType(q.type);
+                      setQText(q.question);
+                      if (q.type === 'multiple-choice') setQOptions(q.options || ['', '', '', '']);
+                      setQCorrect(q.correctAnswer);
+                      setQuestions(questions.filter(x => x.id !== q.id));
+                    }}
+                  >
+                    <span className="text-xs">Edit</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-1 h-auto text-red-500"
+                    onClick={() => setQuestions(questions.filter(x => x.id !== q.id))}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

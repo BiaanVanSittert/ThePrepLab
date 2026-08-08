@@ -10,6 +10,9 @@ import { ImportModal } from './modals/ImportModal';
 
 export function SettingsModal() {
   const isWeb = import.meta.env.VITE_APP_MODE === 'web';
+  const enableShortcuts = useAppStore(s => s.enableShortcuts);
+  const toggleShortcuts = useAppStore(s => s.toggleShortcuts);
+  
   const [isOpen, setIsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   
@@ -102,7 +105,7 @@ export function SettingsModal() {
                 </Button>
                 <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-muted/10">
                   <span className="text-sm font-medium">Builder Shortcuts (Ctrl+F/B)</span>
-                  <input type="checkbox" checked={useAppStore(s => s.enableShortcuts)} onChange={(e) => useAppStore.getState().toggleShortcuts(e.target.checked)} className="rounded border-gray-300 w-4 h-4" />
+                  <input type="checkbox" checked={enableShortcuts} onChange={(e) => toggleShortcuts(e.target.checked)} className="rounded border-gray-300 w-4 h-4" />
                 </div>
               </div>
 
