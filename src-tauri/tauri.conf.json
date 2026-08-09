@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "ThePrepLab",
-    "version": "0.4.7"
+    "version": "0.4.8"
   },
   "tauri": {
     "allowlist": {
@@ -19,7 +19,7 @@
     },
     "bundle": {
       "active": true,
-      "targets": "all",
+      "targets": ["nsis"],
       "identifier": "com.thepreplab.app",
       "publisher": "PrepLabs (Biaan Van Sittert)",
       "icon": [
