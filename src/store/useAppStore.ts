@@ -70,11 +70,13 @@ export interface AppState {
   // Actions
   setKnowledgeBase: (text: string) => void;
   addDeck: (title: string) => string;
+  restoreDeck: (deck: FlashcardDeck) => void;
   removeDeck: (id: string) => void;
   addFlashcardToDeck: (deckId: string, card: Omit<FlashcardData, 'id'>) => void;
   removeFlashcardFromDeck: (deckId: string, cardId: string) => void;
   
   addExam: (exam: Omit<AppState['exams'][0], 'id'>) => void;
+  restoreExam: (exam: AppState['exams'][0]) => void;
   updateExam: (id: string, exam: Omit<AppState['exams'][0], 'id'>) => void;
   removeExam: (id: string) => void;
   addResult: (result: Omit<AppResult, 'id'>) => void;
@@ -180,6 +182,10 @@ export const useAppStore = create<AppState>()(
         return newId;
       },
 
+      restoreDeck: (deck) => set((state) => ({
+        decks: [...state.decks, deck]
+      })),
+
       removeDeck: (id) => set((state) => ({
         decks: state.decks.filter(d => d.id !== id)
       })),
@@ -202,6 +208,10 @@ export const useAppStore = create<AppState>()(
 
       addExam: (exam) => set((state) => ({
         exams: [...state.exams, { ...exam, id: crypto.randomUUID() }]
+      })),
+
+      restoreExam: (exam) => set((state) => ({
+        exams: [...state.exams, exam]
       })),
 
       updateExam: (id, updatedExam) => set((state) => ({

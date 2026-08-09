@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Link } from 'react-router-dom';
 import { Trash2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function ExamMode() {
   const { exams, addResult, removeExam } = useAppStore();
@@ -50,7 +51,16 @@ export function ExamMode() {
                       variant="ghost" 
                       size="sm" 
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => { e.stopPropagation(); removeExam(exam.id); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        removeExam(exam.id); 
+                        toast("Exam deleted", {
+                          action: {
+                            label: "Undo",
+                            onClick: () => useAppStore.getState().restoreExam(exam)
+                          }
+                        });
+                      }}
                     >
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>

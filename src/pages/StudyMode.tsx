@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Flashcard } from '../components/ui/Flashcard';
 import { Check, X, RefreshCcw, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function StudyMode() {
   const { decks, removeDeck, addResult } = useAppStore();
@@ -44,7 +45,16 @@ export function StudyMode() {
                     variant="ghost" 
                     size="sm" 
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => { e.stopPropagation(); removeDeck(deck.id); }}
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      removeDeck(deck.id); 
+                      toast("FlashDeck deleted", {
+                        action: {
+                          label: "Undo",
+                          onClick: () => useAppStore.getState().restoreDeck(deck)
+                        }
+                      });
+                    }}
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>

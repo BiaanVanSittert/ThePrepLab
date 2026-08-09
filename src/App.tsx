@@ -97,7 +97,7 @@ function App() {
       <MainLayout navLinks={isWeb ? <WebNavLinks /> : <DesktopNavLinks />}>
         {isWeb ? <WebRoutes /> : <DesktopRoutes />}
       </MainLayout>
-      <Toaster position="bottom-right" richColors duration={6000} />
+      <Toaster position="bottom-right" richColors duration={6000} closeButton />
     </HashRouter>
   );
 }
