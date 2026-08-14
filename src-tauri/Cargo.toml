@@ -1,6 +1,6 @@
 [package]
 name = "the-prep-lab"
-version = "0.4.8"
+version = "1.0.1"
 description = "ThePrepLab"
 authors = ["PrepLabs (Biaan Van Sittert)"]
 edition = "2021"

@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "ThePrepLab",
-    "version": "0.4.8"
+    "version": "1.0.1"
   },
   "tauri": {
     "allowlist": {
