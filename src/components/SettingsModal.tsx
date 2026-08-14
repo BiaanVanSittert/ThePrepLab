@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { Settings, AlertTriangle, Download, Upload, RefreshCw } from 'lucide-react';
+import { Settings, AlertTriangle, Download, Upload, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import pkg from '../../package.json';
 import { ExportModal } from './modals/ExportModal';
@@ -25,10 +25,16 @@ export function SettingsModal() {
   const handleManualUpdateCheck = () => {
     toast.loading("Checking for updates...", { id: 'update-check' });
     fetch('https://api.github.com/repos/BiaanVanSittert/ThePrepLab/releases/latest', { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => {
+      .then(async res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`);
+        }
+        const data = await res.json();
         const latestVersion = data.tag_name?.replace(/^v/i, '');
-        if (latestVersion && latestVersion !== pkg.version) {
+        if (!latestVersion) {
+          throw new Error("Missing tag_name in response");
+        }
+        if (latestVersion !== pkg.version) {
           toast.success(`Version ${data.tag_name} is available!`, {
             id: 'update-check',
             description: "A newer version is ready.",
@@ -41,7 +47,10 @@ export function SettingsModal() {
           toast.success("ThePrepLab is up to date!", { id: 'update-check' });
         }
       })
-      .catch(() => toast.error("Failed to check for updates", { id: 'update-check' }));
+      .catch((err) => {
+        console.warn("Update check failed:", err);
+        toast.error("Could not check for updates (network or rate limit)", { id: 'update-check' });
+      });
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +80,7 @@ export function SettingsModal() {
       
       setTimeout(() => {
         window.location.reload();
-      }, 1500);
+      }, 1200);
 
     } catch (e) {
       console.error(e);
@@ -99,49 +108,54 @@ export function SettingsModal() {
               
               {/* Application Settings */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Application</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Application</h3>
                 <Button variant="outline" className="w-full justify-start gap-3" onClick={handleManualUpdateCheck}>
                   <RefreshCw className="w-4 h-4 text-primary" /> Check for Updates
                 </Button>
-                <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-muted/10">
-                  <span className="text-sm font-medium">Builder Shortcuts (Ctrl+F/B)</span>
-                  <input type="checkbox" checked={enableShortcuts} onChange={(e) => toggleShortcuts(e.target.checked)} className="rounded border-gray-300 w-4 h-4" />
+                <div className="flex items-center justify-between p-3 border border-border rounded-xl bg-muted/10">
+                  <span className="text-sm font-medium">Smart Highlighter (Ctrl+F/B)</span>
+                  <input 
+                    type="checkbox" 
+                    checked={enableShortcuts} 
+                    onChange={(e) => toggleShortcuts(e.target.checked)} 
+                    className="rounded border-gray-300 w-4 h-4 text-primary focus:ring-primary cursor-pointer" 
+                  />
                 </div>
               </div>
 
               {/* Data Management */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Data Management</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data Management</h3>
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1 gap-2" onClick={() => setIsExportOpen(true)}>
-                    <Download className="w-4 h-4" /> Export
+                    <Download className="w-4 h-4" /> Export Backup
                   </Button>
                   <Button variant="outline" className="flex-1 gap-2" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="w-4 h-4" /> Import
+                    <Upload className="w-4 h-4" /> Import Backup
                   </Button>
                 </div>
               </div>
               
               {/* Dangerous Actions */}
-              <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-xl space-y-4 mt-8">
+              <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-2xl space-y-4 mt-6">
                 <div className="flex items-center gap-2 text-red-500">
                   <AlertTriangle className="w-5 h-5" />
-                  <h3 className="font-semibold">Danger Zone</h3>
+                  <h3 className="font-semibold text-sm">Danger Zone</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete all your local FlashDecks, Exams, and scores. This will restore the default demo data.
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Permanently delete all your custom Notebooks, FlashDecks, Exams, and scores. Restores original demo data.
                 </p>
                 
                 {!confirmDelete ? (
-                  <Button variant="outline" className="w-full text-red-500 border-red-500/50 hover:bg-red-500 hover:text-white" onClick={() => setConfirmDelete(true)}>
+                  <Button variant="outline" className="w-full text-red-500 border-red-500/50 hover:bg-red-500 hover:text-white text-xs h-9" onClick={() => setConfirmDelete(true)}>
                     Factory Reset All Data
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button variant="secondary" className="flex-1" onClick={() => setConfirmDelete(false)}>
+                    <Button variant="secondary" className="flex-1 text-xs h-9" onClick={() => setConfirmDelete(false)}>
                       Cancel
                     </Button>
-                    <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleFactoryReset}>
+                    <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs h-9" onClick={handleFactoryReset}>
                       Confirm Wipe
                     </Button>
                   </div>
@@ -150,8 +164,8 @@ export function SettingsModal() {
 
             </div>
 
-            <Button variant="ghost" className="absolute top-4 right-4" onClick={() => { setIsOpen(false); setConfirmDelete(false); }}>
-              ✕
+            <Button variant="ghost" size="sm" className="absolute top-4 right-4 p-1.5 h-auto rounded-lg" onClick={() => { setIsOpen(false); setConfirmDelete(false); }}>
+              <X className="w-4 h-4" />
             </Button>
           </div>
         </div>,
