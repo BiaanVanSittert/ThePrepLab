@@ -1,6 +1,6 @@
 
 import { Button } from '../components/ui/Button';
-import { Download, Layers, CheckCircle } from 'lucide-react';
+import { Download, Layers, CheckCircle, Github, Bug, Code2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
@@ -52,6 +52,42 @@ export function Dashboard() {
           </div>
         </div>
       </section>
+
+      {/* Footer / Community Links */}
+      <footer className="w-full max-w-4xl pt-8 pb-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+        <p>Built with ❤️ by <a href="https://github.com/BiaanVanSittert" target="_blank" rel="noopener noreferrer" className="font-medium text-foreground hover:underline">Biaan Van Sittert</a></p>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://github.com/BiaanVanSittert"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
+            <Github className="w-3.5 h-3.5" />
+            <span>Developer GitHub</span>
+          </a>
+          <span className="text-border">•</span>
+          <a
+            href="https://github.com/BiaanVanSittert/ThePrepLab/issues/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
+            <Bug className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+            <span>Report an Issue</span>
+          </a>
+          <span className="text-border">•</span>
+          <a
+            href="https://github.com/BiaanVanSittert/ThePrepLab"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
+            <Code2 className="w-3.5 h-3.5" />
+            <span>Repository</span>
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
